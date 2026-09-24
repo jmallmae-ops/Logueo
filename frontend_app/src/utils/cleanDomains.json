@@ -1,0 +1,1649 @@
+{
+  "Lithology": {
+    "Subvolcánico": {
+      "color": "#f7e6f2",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "texturas": [
+        "Afanítico",
+        "Fanerítico",
+        "Indiferenciado",
+        "Porfirítico"
+      ],
+      "composiciones": [
+        "Andesita",
+        "Basalto",
+        "Cuarzo Latita",
+        "Dacita",
+        "Diorita",
+        "Indiferenciado",
+        "Latita",
+        "Riodacita",
+        "Riolita",
+        "Traquita"
+      ],
+      "formas": [
+        "Dique",
+        "Domo",
+        "Indiferenciado",
+        "Sill",
+        "Stock"
+      ],
+      "formaciones": [
+        "Barroso Inferior",
+        "Barroso Superior",
+        "Collpa",
+        "Fm. Alpabamba",
+        "Fm. Andahua",
+        "Fm. Aniso",
+        "Fm. Caylloma",
+        "Fm. Hualhuani",
+        "Fm. Jallhua",
+        "Fm. Julcani",
+        "Fm. Kenkohuayco",
+        "Fm. Orcopampa",
+        "Fm. Shuco",
+        "Gpo. Tacaza",
+        "Indiferenciado",
+        "Sarpane",
+        "Und. Tuti"
+      ],
+      "geointerps": [
+        "Intrusivos subvolcánicos dacíticos, andesíticos, riodacíticos tardíos",
+        "No Recuperado - Vacios",
+        "Pórfido Intramineral Tardío Andesitico - Epi",
+        "Pórfido Intramineral Tardío Dacitico - Epi",
+        "Pórfido Intramineral Tardío Dioritico - Epi",
+        "Pórfido Intramineral Temprano Andesitico - Epi",
+        "Pórfido Intramineral Temprano Dacitico - Epi",
+        "Pórfido Intramineral Temprano Dioritico - Epi",
+        "Pórfido Temprano Andesitico - Epi",
+        "Pórfido Temprano Dacitico - Epi",
+        "Pórfido Temprano Dioritico - Epi"
+      ]
+    },
+    "Intrusivo": {
+      "color": "#d44e76",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "texturas": [
+        "Afanítico",
+        "Fanerítico",
+        "Indiferenciado",
+        "Porfirítico"
+      ],
+      "composiciones": [
+        "Cuarzo sienita",
+        "Cuarzodacita",
+        "Cuarzodioríta",
+        "Cuarzomonzodiorita",
+        "Cuarzomonzogabro",
+        "Cuarzomonzonita",
+        "Diorita",
+        "Gabro",
+        "Granito",
+        "Granito de FLD alq",
+        "Granodiorita",
+        "Indiferenciado",
+        "Microdiorita",
+        "Monzodiorita",
+        "Monzogranito",
+        "Monzonita",
+        "Sienita",
+        "Sienogranito",
+        "Tonalita"
+      ],
+      "formas": [
+        "Batolito",
+        "Dique",
+        "Sill",
+        "Stock"
+      ],
+      "formaciones": [
+        "Fm. Orcopampa",
+        "Indiferenciado",
+        "Sarpane"
+      ],
+      "geointerps": [
+        "Cuarcífero",
+        "Intrusivos subvolcánicos dacíticos, andesíticos, riodacíticos tardíos",
+        "No Recuperado - Vacios",
+        "Pórfido Andesita",
+        "Pórfido Andesítico Horblendico",
+        "Pórfido Cuarzo Feldespatico",
+        "Pórfido Cuarzo Monzonitico Granular",
+        "Pórfido Cuarzo Monzonitico Intramineral",
+        "Pórfido Cuarzo Monzonitico Principal",
+        "Pórfido Dacita",
+        "Pórfido Feldespatico",
+        "Pórfido Intramineral Tardío Andesitico - Sk",
+        "Pórfido Intramineral Tardío Dacitico - Sk",
+        "Pórfido Intramineral Tardío Dioritico - Sk",
+        "Pórfido Intramineral Temprano Andesitico - Sk",
+        "Pórfido Intramineral Temprano Dacitico - Sk",
+        "Pórfido Intramineral Temprano Dioritico - Sk",
+        "Pórfido Monzodioritico",
+        "Pórfido Temprano Andesitico - Sk",
+        "Pórfido Temprano Dacitico - Sk",
+        "Pórfido Temprano Dioritico - Sk"
+      ]
+    },
+    "Volcánico Coherente": {
+      "color": "#b8f0ad",
+      "subtipos": [
+        "Indiferenciado",
+        "Lava"
+      ],
+      "texturas": [
+        "Afanítico",
+        "Autobrecha",
+        "Brechado",
+        "Fanerítico",
+        "Indiferenciado",
+        "Patchy Agusanada",
+        "Porfirítico"
+      ],
+      "composiciones": [
+        "Andesita",
+        "Andesita Basáltica",
+        "Basalto",
+        "Dacita",
+        "Indiferenciado",
+        "Riodacita",
+        "Riolita",
+        "Traquita"
+      ],
+      "formas": [
+        "Almohadillado",
+        "Bandeado",
+        "Devitrificado",
+        "Indiferenciado",
+        "Vesicular",
+        "Vitreo",
+        "Vitriocristal"
+      ],
+      "formaciones": [
+        "Barroso Inferior",
+        "Barroso Superior",
+        "Collpa",
+        "Fm. Alpabamba",
+        "Fm. Andahua",
+        "Fm. Aniso",
+        "Fm. Chayllacatana",
+        "Fm. Chilca",
+        "Fm. Huaranguillo",
+        "Fm. Jallhua",
+        "Fm. Kenkohuayco",
+        "Fm. Llama",
+        "Fm. Orcopampa",
+        "Fm. Porculla",
+        "Fm. Pucusana",
+        "Fm. Quilmaná",
+        "Gpo. Barroso",
+        "Gpo. Calipuy",
+        "Gpo. Casma",
+        "Gpo. Puente Piedra",
+        "Gpo. Tacaza",
+        "Indiferenciado",
+        "Nequeta",
+        "Sarpane",
+        "Tambomayo Inferior",
+        "Tambomayo Superior",
+        "Und. Tuti",
+        "Volc. Andahua",
+        "Volc. Huambos"
+      ],
+      "geointerps": [
+        "No Recuperado - Vacios"
+      ]
+    },
+    "Volcánico Fragmental": {
+      "color": "#adbf77",
+      "subtipos": [
+        "Ignimbrita",
+        "Indiferenciado",
+        "Toba",
+        "Toba  de Cristales",
+        "Toba Cristalolítica",
+        "Toba Cristalovítrea",
+        "Toba Lítica",
+        "Toba brechosa",
+        "Toba de Ceniza",
+        "Toba lapilli"
+      ],
+      "texturas": [
+        "Afanítico",
+        "Aglomerado",
+        "Andesita",
+        "Arenisca",
+        "Bandeado",
+        "Biotita",
+        "Bloques",
+        "Caliza",
+        "Cristales",
+        "Cuarzo",
+        "Dacita",
+        "Esferulítica",
+        "Eutaxítica",
+        "Indiferenciado",
+        "Lutita",
+        "Patchy Agusanada",
+        "Piroclástica",
+        "Porfirítico",
+        "Pumicea",
+        "Riolita",
+        "Soldada",
+        "Sulfuros",
+        "Vesicular",
+        "Vitreo",
+        "Vitriocristal"
+      ],
+      "composiciones": [
+        "Andesita",
+        "Basalto",
+        "Cuarzo Latita",
+        "Dacita",
+        "Indiferenciado",
+        "Latita",
+        "Riodacita",
+        "Riolita",
+        "Traquita"
+      ],
+      "formas": [
+        "Esferulítica",
+        "Eutaxítica",
+        "Fiamme",
+        "Indiferenciado",
+        "Pumicea",
+        "Soldada",
+        "Vesicular",
+        "Vitreo",
+        "Vitriocristal"
+      ],
+      "formaciones": [
+        "Barroso Inferior",
+        "Barroso Superior",
+        "Fm. Alpabamba",
+        "Fm. Aniso",
+        "Fm. Caylloma",
+        "Fm. Hualhuani",
+        "Fm. Jallhua",
+        "Fm. Llama",
+        "Fm. Orcopampa",
+        "Fm. Porculla",
+        "Fm. Santa Rosa",
+        "Fm. Sencca",
+        "Gpo. Ambo",
+        "Gpo. Calipuy",
+        "Gpo. Mitu",
+        "Gpo. Tacaza",
+        "Indiferenciado",
+        "Nequeta",
+        "Sarpane",
+        "Tambomayo Inferior",
+        "Tambomayo Superior",
+        "Volc. Huambos"
+      ],
+      "geointerps": [
+        "No Recuperado - Vacios"
+      ]
+    },
+    "Volcanoclástico": {
+      "color": "#fff2d3",
+      "subtipos": [
+        "Retrabajado",
+        "Sedimentario"
+      ],
+      "texturas": [
+        "Indiferenciado"
+      ],
+      "composiciones": [
+        "Andesita",
+        "Basalto",
+        "Carbonatados",
+        "Clásticos",
+        "Dacita",
+        "Indiferenciado",
+        "Latita",
+        "Pelíticos",
+        "Riodacita",
+        "Riolita",
+        "Traquita"
+      ],
+      "formas": [
+        "Ceniza",
+        "Lapilli"
+      ],
+      "formaciones": [
+        "Fm. Chilca",
+        "Fm. Huaranguillo",
+        "Fm. Orcopampa",
+        "Fm. Pucusana",
+        "Fm. Quilmaná",
+        "Gpo. Casma",
+        "Gpo. Puente Piedra",
+        "Gpo. Tacaza",
+        "Indiferenciado",
+        "Nequeta",
+        "Sarpane"
+      ],
+      "geointerps": [
+        "No Recuperado - Vacios"
+      ]
+    },
+    "Brecha": {
+      "color": "#da74e8",
+      "subtipos": [
+        "Autobrecha",
+        "Colapso",
+        "Craquelada",
+        "Diatrema",
+        "Disolución",
+        "Freatomagmática",
+        "Freática",
+        "Hidrotermal",
+        "Indiferenciado",
+        "Intrusiva",
+        "Jigsaw",
+        "Magmática",
+        "Magmática Hidrotermal",
+        "Metamórfica",
+        "Pebble Dike",
+        "Sedimentario",
+        "Tecto Hidrotermal",
+        "Tectónica",
+        "Tufisita"
+      ],
+      "texturas": [
+        "Cemento Soportada",
+        "Clasto Soportada",
+        "Craquelada",
+        "Indiferenciado",
+        "Matriz Soportada"
+      ],
+      "composiciones": [
+        "Indiferenciado",
+        "Monomíctica",
+        "Polimíctica"
+      ],
+      "formas": [
+        "Angulosa",
+        "Facetado",
+        "Indiferenciado",
+        "Redondeada",
+        "Subangulosa",
+        "Subredondeada",
+        "Tabular"
+      ],
+      "formaciones": [
+        "Fm. Aniso",
+        "Fm. Labra",
+        "Fm. Murco",
+        "Fm. Orcopampa",
+        "Indiferenciado",
+        "Sarpane"
+      ],
+      "geointerps": [
+        "Brecha Craquel Hidrotermal",
+        "Brecha Freatica Hidrotermal",
+        "BxFr-Clst Intrusivos",
+        "BxFr-Clst Skarn",
+        "BxFr-Clst Sulfuros",
+        "BxFr-Clst Volcanicos",
+        "No Recuperado - Vacios",
+        "Oxido Manganeso",
+        "Volcano Sedimentaria"
+      ]
+    },
+    "Vitreo": {
+      "color": "#686868",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "texturas": [
+        "Indiferenciado"
+      ],
+      "composiciones": [
+        "Indiferenciado"
+      ],
+      "formas": [
+        "Masiva"
+      ],
+      "formaciones": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Indiferenciado"
+      ]
+    },
+    "Sedimentario": {
+      "color": "#a59152",
+      "subtipos": [
+        "Arcosa",
+        "Arenisca",
+        "Caliza",
+        "Chert",
+        "Conglomerado",
+        "Dolomia",
+        "Evaporitas",
+        "Grawaca",
+        "Limolita",
+        "Lodolita",
+        "Lutita",
+        "Margas"
+      ],
+      "texturas": [
+        "Bindstone",
+        "Cristalina",
+        "Fino",
+        "Grainstone",
+        "Grueso",
+        "Indiferenciado",
+        "Medio",
+        "Micritico",
+        "Mudstone",
+        "Packstone",
+        "Wackstone"
+      ],
+      "composiciones": [
+        "Arenosa",
+        "Bioclástica",
+        "Bioturbada",
+        "Bituminosa",
+        "Calcárea",
+        "Cuarzosa",
+        "Esparítica",
+        "Feldespática",
+        "Indiferenciado",
+        "Margosa",
+        "Margosa Bioclástica",
+        "Micritico",
+        "Micrítica"
+      ],
+      "formas": [
+        "Bancos Delgados",
+        "Bancos Gruesos",
+        "Bioturbación",
+        "Clastos multidireccionales",
+        "Cruzada",
+        "Escape de fluidos",
+        "Estilolitos",
+        "Estrato",
+        "Gradacional",
+        "Granocreciente",
+        "Granodecreciente",
+        "Indiferenciado",
+        "Laminar",
+        "Masiva",
+        "Ninguno",
+        "Nodular",
+        "Nodulos de yeso",
+        "Sin Forma",
+        "Tableada",
+        "Techos erosivos"
+      ],
+      "formaciones": [
+        "Fm. Alpabamba",
+        "Fm. Aramachay",
+        "Fm. Arcurquina",
+        "Fm. Atocongo",
+        "Fm. Cachios",
+        "Fm. Cajamarca",
+        "Fm. Calera",
+        "Fm. Carhuaz",
+        "Fm. Casapalca",
+        "Fm. Celendin",
+        "Fm. Chambara",
+        "Fm. Chayllacatana",
+        "Fm. Chilca",
+        "Fm. Chimu",
+        "Fm. Chulec",
+        "Fm. Chuquibambilla",
+        "Fm. Colqui",
+        "Fm. Condorsinga",
+        "Fm. Farrat",
+        "Fm. Ferrobamba",
+        "Fm. Goyllarisquizga",
+        "Fm. Gramadal",
+        "Fm. Herradura",
+        "Fm. Hualhuani",
+        "Fm. Huaranguillo",
+        "Fm. Inca",
+        "Fm. Jeroc",
+        "Fm. Jumasha Inferior",
+        "Fm. Jumasha Medio",
+        "Fm. Jumasha Superior",
+        "Fm. Labra",
+        "Fm. Lacsacocha",
+        "Fm. Lurín",
+        "Fm. Mara",
+        "Fm. Marcavilca",
+        "Fm. Murco",
+        "Fm. Oyon",
+        "Fm. Pamplona",
+        "Fm. Pariahuanca",
+        "Fm. Pariatambo",
+        "Fm. Piste",
+        "Fm. Pocobamba",
+        "Fm. Puente",
+        "Fm. Quilmaná",
+        "Fm. Salto del Fraile",
+        "Fm. Santa",
+        "Fm. Socosani",
+        "Fm. Soraya",
+        "Fm. Yauca",
+        "Fm. Yumagual",
+        "Gpo. Ambo",
+        "Gpo. Cabanillas",
+        "Gpo. Casma",
+        "Gpo. Excelsior",
+        "Gpo. Lima",
+        "Gpo. Mitu",
+        "Gpo. Pucara",
+        "Gpo. Puente Piedra",
+        "Gpo. Puno",
+        "Gpo. Tarma",
+        "Gpo. Yura",
+        "Indiferenciado",
+        "Marker"
+      ],
+      "geointerps": [
+        "No Recuperado - Vacios"
+      ]
+    },
+    "Metamórfico": {
+      "color": "#f4e4f2",
+      "subtipos": [
+        "Cuarcita",
+        "Endoskarn",
+        "Esquisto",
+        "Exoskarn",
+        "Filita",
+        "Gneiss",
+        "Hornfels",
+        "Indiferenciado",
+        "Metavolcánico",
+        "Mármol",
+        "Pizarra",
+        "Skarn"
+      ],
+      "texturas": [
+        "Bandeado",
+        "Grano Fino",
+        "Grano Grueso",
+        "Grano Medio",
+        "Granoblástica",
+        "Homogéneo",
+        "Lepidoblastica",
+        "Migmatíta"
+      ],
+      "composiciones": [
+        "Indiferenciado"
+      ],
+      "formas": [
+        "Indiferenciado"
+      ],
+      "formaciones": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "No Recuperado - Vacios",
+        "Obliterado"
+      ]
+    },
+    "Cuaternario": {
+      "color": "#fafafa",
+      "subtipos": [
+        "Aluvial",
+        "Bofedal",
+        "Coluvial",
+        "Conglomerado",
+        "Ferricretas",
+        "Fluvial",
+        "Fluvioglaciar",
+        "Morrénico",
+        "Organico Topsoil",
+        "Suelo"
+      ],
+      "texturas": [
+        "Clástico",
+        "Conglomeradico",
+        "Eolico",
+        "Fino",
+        "Grueso",
+        "Medio"
+      ],
+      "composiciones": [
+        "Indiferenciado"
+      ],
+      "formas": [
+        "Canal",
+        "Estrato",
+        "Masivo"
+      ],
+      "formaciones": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "No Recuperado - Vacios",
+        "Obliterado"
+      ]
+    },
+    "Obliterado": {
+      "color": "#993366",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "texturas": [
+        "Indiferenciado"
+      ],
+      "composiciones": [
+        "Indiferenciado"
+      ],
+      "formas": [
+        "Indiferenciado"
+      ],
+      "formaciones": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Indiferenciado"
+      ]
+    },
+    "No Recuperada": {
+      "color": "#ffffff",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "texturas": [
+        "Indiferenciado"
+      ],
+      "composiciones": [
+        "Indiferenciado"
+      ],
+      "formas": [
+        "Indiferenciado"
+      ],
+      "formaciones": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Indiferenciado"
+      ]
+    }
+  },
+  "Alteration": {
+    "Alterado": {
+      "color": "#eced9d",
+      "subtipos": [
+        "Específica",
+        "Hipógena",
+        "Supergena"
+      ],
+      "geointerps": [
+        "Argilica avanzada",
+        "Argílica",
+        "Argílica Intermedia",
+        "Argílica Supérgena",
+        "Clorita Sericita",
+        "Cloritización",
+        "Cuarzo Sericita",
+        "Decalcificacion",
+        "Descarbonatización",
+        "Dolomitización",
+        "EndoSkarn Progrado",
+        "EndoSkarn Retrogrado",
+        "Epidotización",
+        "Exoskarn Progrado",
+        "Exoskarn Retrogrado",
+        "Fílica",
+        "Inalterado",
+        "Jarozitización",
+        "Jasperoica",
+        "Marmolizacion",
+        "Montmorillonita",
+        "No recuperado",
+        "Oxidacion",
+        "Piritización",
+        "Potásica",
+        "Propilítica",
+        "Sericitización",
+        "Serpentinización",
+        "Sideritizacion",
+        "Silice Masiva",
+        "Silicificación",
+        "Skarn Magnetita",
+        "Sílice Alunita",
+        "Sílice Arcillas",
+        "Sílice Calcedónica",
+        "Sílice Caolinita",
+        "Sílice Dickita",
+        "Sílice Diáspora",
+        "Sílice Granular",
+        "Sílice Opalina",
+        "Sílice Pirofilita",
+        "Turmalinización",
+        "Vuggy Sílica"
+      ],
+      "minerales": [
+        "Actinolita-tremolita",
+        "Adularia",
+        "Albita",
+        "Alunita",
+        "Anfíboles",
+        "Anhidrita",
+        "Arcillas",
+        "Baritina",
+        "Biotita secundaria",
+        "Calcedonia",
+        "Calcita",
+        "Calcosilicatos",
+        "Caliza Recristalizada-Marmolizada",
+        "Caolín",
+        "Carbón",
+        "Clorita",
+        "Cuarzo",
+        "Dickita",
+        "Diáspora",
+        "Diópsido",
+        "Dolomita",
+        "Dumortierita",
+        "Epidota",
+        "Esmectita",
+        "Especularita",
+        "Feldespato Potásico",
+        "Fengita (variedad de la muscovita)",
+        "Flogopita",
+        "Fluorita",
+        "Granates Rojos",
+        "Granates Verdes",
+        "Illita",
+        "Indiferenciado",
+        "Magnetita",
+        "Montmorillonita",
+        "Muscovita",
+        "Ninguno",
+        "Pirofilita",
+        "Pirolusita",
+        "Piroxenos",
+        "Plagioclasas",
+        "Rodocrosita",
+        "Rodonita",
+        "Sericita",
+        "Siderita",
+        "Silicatos Mn",
+        "Sílice",
+        "Sílice beige",
+        "Sílice blanquecina",
+        "Sílice criptocristalina",
+        "Sílice gris",
+        "Sílice hialina",
+        "Talco",
+        "Turmalina",
+        "Wollastonita",
+        "Yeso",
+        "Zeolitas",
+        "Ópalo"
+      ],
+      "intensidades": [
+        "Débil",
+        "Fuerte",
+        "Moderada",
+        "Ninguno"
+      ],
+      "estilos": [
+        "Bandeada",
+        "Boxwork",
+        "Calcedónica",
+        "Capas",
+        "Cavidades",
+        "Clastos",
+        "Control Estructural",
+        "Diseminada",
+        "Fenocristales",
+        "Fracturas",
+        "Fragmentos",
+        "Granular",
+        "Halo",
+        "Irregular",
+        "Lentes",
+        "Lixiviada",
+        "Marmolización fina",
+        "Marmorización Gruesa",
+        "Masiva",
+        "Matriz",
+        "Ninguno",
+        "Patchy",
+        "Pervasiva",
+        "Recristalizada",
+        "Reemplazamiento",
+        "Relleno de Brecha",
+        "Selectiva",
+        "Sobreimpresa",
+        "Stockwork",
+        "Venilla",
+        "Veta",
+        "Vuggy",
+        "Wormy"
+      ]
+    },
+    "Sin Alteración": {
+      "color": "#b5b4ae",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Indiferenciado"
+      ],
+      "minerales": [
+        "Indiferenciado"
+      ],
+      "intensidades": [
+        "Indiferenciado"
+      ],
+      "estilos": [
+        "Indiferenciado"
+      ]
+    }
+  },
+  "Structural": {
+    "Falla": {
+      "color": "#0026ff",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "intensidades": [
+        "Débil"
+      ],
+      "movimientos": [
+        "Normal"
+      ],
+      "rellenos": [
+        "Panizo"
+      ],
+      "informaciones": [
+        "Medida"
+      ],
+      "texturas": [
+        "Brechada"
+      ],
+      "anchos": [
+        "<0.1m"
+      ],
+      "menas": [
+        "Indiferenciado"
+      ],
+      "gangas": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Indiferenciado"
+      ]
+    },
+    "Venillas": {
+      "color": "#ff8c00",
+      "subtipos": [
+        "Venillas (<10cm)"
+      ],
+      "intensidades": [
+        "Débil"
+      ],
+      "movimientos": [
+        "Normal"
+      ],
+      "rellenos": [
+        "Oxidos"
+      ],
+      "informaciones": [
+        "Medida"
+      ],
+      "texturas": [
+        "Bandeada"
+      ],
+      "anchos": [
+        "<0.1m"
+      ],
+      "menas": [
+        "Indiferenciado"
+      ],
+      "gangas": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Indiferenciado"
+      ]
+    },
+    "Veta": {
+      "color": "#ff2b00",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "intensidades": [
+        "Débil"
+      ],
+      "movimientos": [
+        "Normal"
+      ],
+      "rellenos": [
+        "Oxidos"
+      ],
+      "informaciones": [
+        "Medida"
+      ],
+      "texturas": [
+        "Bandeada"
+      ],
+      "anchos": [
+        "0.1-1m"
+      ],
+      "menas": [
+        "Indiferenciado"
+      ],
+      "gangas": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Indiferenciado"
+      ]
+    },
+    "Ledge": {
+      "color": "#706352",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "intensidades": [
+        "Indiferenciado"
+      ],
+      "movimientos": [
+        "Indiferenciado"
+      ],
+      "rellenos": [
+        "Silico> Argilico"
+      ],
+      "informaciones": [
+        "Medida"
+      ],
+      "texturas": [
+        "Indiferenciado"
+      ],
+      "anchos": [
+        "<0.1m"
+      ],
+      "menas": [
+        "Indiferenciado"
+      ],
+      "gangas": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Indiferenciado"
+      ]
+    },
+    "Sobreescurrimiento": {
+      "color": "#2a2a38",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "intensidades": [
+        "Indiferenciado"
+      ],
+      "movimientos": [
+        "Indiferenciado"
+      ],
+      "rellenos": [
+        "Indiferenciado"
+      ],
+      "informaciones": [
+        "Medida"
+      ],
+      "texturas": [
+        "Indiferenciado"
+      ],
+      "anchos": [
+        "Indiferenciado"
+      ],
+      "menas": [
+        "Indiferenciado"
+      ],
+      "gangas": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Indiferenciado"
+      ]
+    },
+    "Zona de Falla": {
+      "color": "#0026ff",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "intensidades": [
+        "Indiferenciado"
+      ],
+      "movimientos": [
+        "Normal"
+      ],
+      "rellenos": [
+        "Panizo"
+      ],
+      "informaciones": [
+        "Medida"
+      ],
+      "texturas": [
+        "Brechada"
+      ],
+      "anchos": [
+        "Indiferenciado"
+      ],
+      "menas": [
+        "Indiferenciado"
+      ],
+      "gangas": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Indiferenciado"
+      ]
+    },
+    "Zona de Fracturamiento": {
+      "color": "#474752",
+      "subtipos": [
+        "Craquelamiento"
+      ],
+      "intensidades": [
+        "Débil"
+      ],
+      "movimientos": [
+        "Normal"
+      ],
+      "rellenos": [
+        "Panizo"
+      ],
+      "informaciones": [
+        "Medida"
+      ],
+      "texturas": [
+        "Brechada"
+      ],
+      "anchos": [
+        "Indiferenciado"
+      ],
+      "menas": [
+        "Indiferenciado"
+      ],
+      "gangas": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Lineamiento"
+      ]
+    },
+    "Anticlinal": {
+      "color": "#141414",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "intensidades": [
+        "Indiferenciado"
+      ],
+      "movimientos": [
+        "Indiferenciado"
+      ],
+      "rellenos": [
+        "Indiferenciado"
+      ],
+      "informaciones": [
+        "Medida"
+      ],
+      "texturas": [
+        "Indiferenciado"
+      ],
+      "anchos": [
+        "Indiferenciado"
+      ],
+      "menas": [
+        "Indiferenciado"
+      ],
+      "gangas": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Indiferenciado"
+      ]
+    },
+    "Sinclinal": {
+      "color": "#141414",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "intensidades": [
+        "Indiferenciado"
+      ],
+      "movimientos": [
+        "Indiferenciado"
+      ],
+      "rellenos": [
+        "Indiferenciado"
+      ],
+      "informaciones": [
+        "Medida"
+      ],
+      "texturas": [
+        "Indiferenciado"
+      ],
+      "anchos": [
+        "Indiferenciado"
+      ],
+      "menas": [
+        "Indiferenciado"
+      ],
+      "gangas": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Indiferenciado"
+      ]
+    },
+    "Discordancia": {
+      "color": "#141414",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "intensidades": [
+        "Indiferenciado"
+      ],
+      "movimientos": [
+        "Indiferenciado"
+      ],
+      "rellenos": [
+        "Indiferenciado"
+      ],
+      "informaciones": [
+        "Angular"
+      ],
+      "texturas": [
+        "Indiferenciado"
+      ],
+      "anchos": [
+        "Indiferenciado"
+      ],
+      "menas": [
+        "Indiferenciado"
+      ],
+      "gangas": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Indiferenciado"
+      ]
+    },
+    "Esquistosidad": {
+      "color": "#141414",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "intensidades": [
+        "Indiferenciado"
+      ],
+      "movimientos": [
+        "Indiferenciado"
+      ],
+      "rellenos": [
+        "Indiferenciado"
+      ],
+      "informaciones": [
+        "Indiferenciado"
+      ],
+      "texturas": [
+        "Foliada"
+      ],
+      "anchos": [
+        "Indiferenciado"
+      ],
+      "menas": [
+        "Indiferenciado"
+      ],
+      "gangas": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Indiferenciado"
+      ]
+    },
+    "Laminación": {
+      "color": "#141414",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "intensidades": [
+        "Indiferenciado"
+      ],
+      "movimientos": [
+        "Indiferenciado"
+      ],
+      "rellenos": [
+        "Indiferenciado"
+      ],
+      "informaciones": [
+        "Indiferenciado"
+      ],
+      "texturas": [
+        "Planar"
+      ],
+      "anchos": [
+        "Indiferenciado"
+      ],
+      "menas": [
+        "Indiferenciado"
+      ],
+      "gangas": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Indiferenciado"
+      ]
+    },
+    "Escape de Fluidos": {
+      "color": "#141414",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "intensidades": [
+        "Indiferenciado"
+      ],
+      "movimientos": [
+        "Indiferenciado"
+      ],
+      "rellenos": [
+        "Indiferenciado"
+      ],
+      "informaciones": [
+        "Indiferenciado"
+      ],
+      "texturas": [
+        "Indiferenciado"
+      ],
+      "anchos": [
+        "Indiferenciado"
+      ],
+      "menas": [
+        "Indiferenciado"
+      ],
+      "gangas": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Indiferenciado"
+      ]
+    },
+    "Estratificación": {
+      "color": "#141414",
+      "subtipos": [
+        "Indiferenciado"
+      ],
+      "intensidades": [
+        "Indiferenciado"
+      ],
+      "movimientos": [
+        "Indiferenciado"
+      ],
+      "rellenos": [
+        "Indiferenciado"
+      ],
+      "informaciones": [
+        "Indiferenciado"
+      ],
+      "texturas": [
+        "Indiferenciado"
+      ],
+      "anchos": [
+        "Indiferenciado"
+      ],
+      "menas": [
+        "Indiferenciado"
+      ],
+      "gangas": [
+        "Indiferenciado"
+      ],
+      "geointerps": [
+        "Indiferenciado"
+      ]
+    }
+  },
+  "Mineralization": {
+    "Supérgeno, Enriquecidos": {
+      "color": "#ffff00",
+      "composiciones": [
+        "Anglesita",
+        "Atacamita",
+        "Azurita",
+        "Bornita",
+        "Calcantita",
+        "Calcocita",
+        "Cerusita",
+        "Covelita",
+        "Crisocola",
+        "Digenita",
+        "Siderita",
+        "Smithsonita"
+      ],
+      "estilos": [
+        "Boxwork",
+        "Brechado",
+        "Capas",
+        "Clastos",
+        "Cuerpo",
+        "Diseminado",
+        "Diseminado / Venillas",
+        "Fracturas",
+        "Impregnaciones",
+        "Lentes",
+        "Masivo",
+        "Matriz",
+        "Parches",
+        "Pátina",
+        "Relleno",
+        "Remplazamiento",
+        "Selectiva",
+        "Stockworks",
+        "Venillas",
+        "Vetas"
+      ]
+    },
+    "Oxidos, Sulfatos y Carbonatos": {
+      "color": "#ffc000",
+      "composiciones": [
+        "Anhidrita",
+        "Atacamita",
+        "Azurita",
+        "Baritina",
+        "Brocantita",
+        "Calcantita",
+        "Calcita",
+        "Cerusita",
+        "Crisocola",
+        "Cuprita",
+        "Goethita",
+        "Hematita",
+        "Jarosita",
+        "Limonita",
+        "Malaquita",
+        "Neotocita",
+        "Pirolusita",
+        "Psilomelano",
+        "Rodocrosita",
+        "Siderita",
+        "Tenorita",
+        "Yeso"
+      ],
+      "estilos": [
+        "Boxwork",
+        "Brechado",
+        "Capas",
+        "Clastos",
+        "Cristalizado",
+        "Cuerpo",
+        "Diseminado",
+        "Diseminado / Venillas",
+        "Fracturas",
+        "Impregnaciones",
+        "Lentes",
+        "Masivo",
+        "Matriz",
+        "Parches",
+        "Pátina",
+        "Relleno",
+        "Remplazamiento",
+        "Selectiva",
+        "Stockworks",
+        "Venillas",
+        "Vetas"
+      ]
+    },
+    "Mixto, Transicional": {
+      "color": "#00ff00",
+      "composiciones": [
+        "Alabandita",
+        "Arsenopirita",
+        "Bornita",
+        "Calcocita",
+        "Calcopirita",
+        "Casiterita",
+        "Cinabrio",
+        "Cobres grises",
+        "Covelita",
+        "Enargita",
+        "Esfalerita",
+        "Especularita",
+        "Estibina",
+        "Galena",
+        "Magnetita",
+        "Marcasita",
+        "Marmatita",
+        "Molibdenita",
+        "Oro",
+        "Oropimente",
+        "Pirargirita",
+        "Pirita",
+        "Pirrotita",
+        "Plata",
+        "Plata Roja",
+        "Proustita",
+        "Rejalgar",
+        "Sulfosal de Ag",
+        "Tetrahedrita"
+      ],
+      "estilos": [
+        "Boxwork",
+        "Brechado",
+        "Capas",
+        "Clastos",
+        "Cristalizado",
+        "Cuerpo",
+        "Diseminado",
+        "Diseminado / Venillas",
+        "Fracturas",
+        "Impregnaciones",
+        "Lentes",
+        "Masivo",
+        "Matriz",
+        "Parches",
+        "Pátina",
+        "Relleno",
+        "Remplazamiento",
+        "Selectiva",
+        "Stockworks",
+        "Venillas",
+        "Vetas"
+      ]
+    },
+    "Hipogeno, Primarios": {
+      "color": "#ff00ff",
+      "composiciones": [
+        "Anhidrita",
+        "Arsenopirita",
+        "Bornita",
+        "Calcocita",
+        "Calcopirita",
+        "Casiterita",
+        "Cinabrio",
+        "Cobres grises",
+        "Covelita",
+        "Cuarzo",
+        "Enargita",
+        "Esfalerita",
+        "Especularita",
+        "Estibina",
+        "Galena",
+        "Magnetita",
+        "Marcasita",
+        "Marmatita",
+        "Molibdenita",
+        "Oro",
+        "Oropimente",
+        "Pirargirita",
+        "Pirita",
+        "Pirrotita",
+        "Plata",
+        "Plata Roja",
+        "Proustita",
+        "Rejalgar",
+        "Sulfosal de Ag",
+        "Sílice",
+        "Tetrahedrita"
+      ],
+      "estilos": [
+        "Bandeado",
+        "Boxwork",
+        "Brechado",
+        "Capas",
+        "Clastos",
+        "Cristalizado",
+        "Cuerpo",
+        "Diseminado",
+        "Diseminado / Venillas",
+        "Fracturas",
+        "Impregnaciones",
+        "Lentes",
+        "Masivo",
+        "Matriz",
+        "Parches",
+        "Pátina",
+        "Relleno",
+        "Remplazamiento",
+        "Selectiva",
+        "Stockworks",
+        "Venillas",
+        "Vetas"
+      ]
+    },
+    "Sin Mineralización": {
+      "color": "#ffffff",
+      "composiciones": [
+        "Indiferenciado"
+      ],
+      "estilos": [
+        "Indiferenciado"
+      ]
+    },
+    "Oxido de Fierro": {
+      "color": "#cc6600",
+      "composiciones": [
+        "Goethita",
+        "Hematita",
+        "Limonita"
+      ],
+      "estilos": [
+        "Boxwork",
+        "Diseminado",
+        "Diseminado / Venillas",
+        "Fracturas",
+        "Masivo",
+        "Matriz",
+        "Remplazamiento",
+        "Stockworks",
+        "Venillas",
+        "Vetas"
+      ]
+    },
+    "Oxido de Manganeso": {
+      "color": "#996633",
+      "composiciones": [
+        "Pirolusita",
+        "Psilomelano"
+      ],
+      "estilos": [
+        "Boxwork",
+        "Diseminado",
+        "Diseminado / Venillas",
+        "Fracturas",
+        "Masivo",
+        "Matriz",
+        "Remplazamiento",
+        "Stockworks",
+        "Venillas",
+        "Vetas"
+      ]
+    },
+    "Sulfatos": {
+      "color": "#ebbd30",
+      "composiciones": [
+        "Anhidrita",
+        "Baritina",
+        "Jarosita",
+        "Yeso"
+      ],
+      "estilos": [
+        "Boxwork",
+        "Diseminado",
+        "Diseminado / Venillas",
+        "Fracturas",
+        "Masivo",
+        "Matriz",
+        "Remplazamiento",
+        "Stockworks",
+        "Venillas",
+        "Vetas"
+      ]
+    },
+    "Carbonatos": {
+      "color": "#ffc000",
+      "composiciones": [
+        "Calcita",
+        "Cerusita",
+        "Rodocrosita",
+        "Siderita"
+      ],
+      "estilos": [
+        "Boxwork",
+        "Diseminado",
+        "Diseminado / Venillas",
+        "Fracturas",
+        "Masivo",
+        "Matriz",
+        "Remplazamiento",
+        "Stockworks",
+        "Venillas",
+        "Vetas"
+      ]
+    },
+    "Oxidos de Cu": {
+      "color": "#4d4d4d",
+      "composiciones": [
+        "Atacamita",
+        "Azurita",
+        "Brocantita",
+        "Calcantita",
+        "Crisocola",
+        "Cuprita",
+        "Malaquita",
+        "Neotocita",
+        "Tenorita"
+      ],
+      "estilos": [
+        "Boxwork",
+        "Brechado",
+        "Capas",
+        "Clastos",
+        "Cuerpo",
+        "Diseminado",
+        "Diseminado / Venillas",
+        "Fracturas",
+        "Impregnaciones",
+        "Lentes",
+        "Masivo",
+        "Matriz",
+        "Parches",
+        "Pátina",
+        "Relleno",
+        "Remplazamiento",
+        "Selectiva",
+        "Stockworks",
+        "Venillas",
+        "Vetas"
+      ]
+    }
+  }
+}
