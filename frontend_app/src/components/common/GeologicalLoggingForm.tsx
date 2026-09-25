@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import domainsData from '../../utils/cleanDomains.json';
 import domainMapping from '../../utils/domainMapping.json';
+import { API_BASE } from '../../config';
 
 interface GeologicalLoggingFormProps {
   activeDataSet?: string;
@@ -318,7 +319,7 @@ export default function GeologicalLoggingForm({ activeDataSet = 'LITOLOGIA', act
     };
 
     try {
-        const response = await fetch('http://localhost:8000/api/save_log', {
+        const response = await fetch(API_BASE + '/api/save_log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)

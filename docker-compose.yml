@@ -1,0 +1,32 @@
+# Despliegue en Coolify (Build Pack: Docker Compose)
+#   Backend  → https://api.datageo.site  (puerto interno 8000)
+#   Frontend → https://datageo.site      (puerto interno 3000)
+# Los dominios se asignan en Coolify → Domains.
+
+services:
+  backend:
+    build:
+      context: ./backend_api
+    environment:
+      - PORT=8000
+      - DB_PATH=/data/geology.sqlite
+    volumes:
+      - logueo-data:/data
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend_app
+      args:
+        VITE_API_URL: ${VITE_API_URL:-https://api.datageo.site}
+        GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+    expose:
+      - "3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  logueo-data:

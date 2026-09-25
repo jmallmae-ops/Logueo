@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE } from '../../config';
 
 const TABLES = [
   { id: 'Lithology', name: 'LITOLOGIA LOG' },
@@ -18,7 +19,7 @@ export default function DatosView() {
 
   useEffect(() => {
     // Fetch only holes that have data
-    fetch('http://localhost:8000/api/logged_holes')
+    fetch(API_BASE + '/api/logged_holes')
       .then(res => res.json())
       .then(data => {
         const ids = data.map((h: any) => h.HOLEID);
@@ -35,13 +36,13 @@ export default function DatosView() {
       return;
     }
     // Fetch table data
-    fetch(`http://localhost:8000/api/get_logs?hole_id=${activeHole}&dataset=${activeTable}`)
+    fetch(`${API_BASE}/api/get_logs?hole_id=${activeHole}&dataset=${activeTable}`)
       .then(res => res.json())
       .then(data => setTableData(data))
       .catch(err => console.error(err));
 
     // Fetch summary
-    fetch(`http://localhost:8000/api/hole_summary?hole_id=${activeHole}`)
+    fetch(`${API_BASE}/api/hole_summary?hole_id=${activeHole}`)
       .then(res => res.json())
       .then(data => setHoleSummary(data))
       .catch(err => console.error(err));

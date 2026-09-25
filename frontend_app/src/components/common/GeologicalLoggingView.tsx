@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import GeologicalLoggingForm from './GeologicalLoggingForm';
 import domainsData from '../../utils/cleanDomains.json';
 import domainMapping from '../../utils/domainMapping.json';
+import { API_BASE } from '../../config';
 
 interface GeologicalLoggingViewProps {
   images: any[]; // Or ImageItem[]
@@ -50,7 +51,7 @@ export default function GeologicalLoggingView({ images }: GeologicalLoggingViewP
 
   // Fetch Areas on mount
   useEffect(() => {
-    fetch('http://localhost:8000/api/areas')
+    fetch(API_BASE + '/api/areas')
       .then(res => res.json())
       .then(data => {
         setAreas(data);
@@ -62,7 +63,7 @@ export default function GeologicalLoggingView({ images }: GeologicalLoggingViewP
   // Fetch Projects when Area changes
   useEffect(() => {
     if (!selectedArea) return;
-    fetch(`http://localhost:8000/api/projects?areacode=${selectedArea}`)
+    fetch(`${API_BASE}/api/projects?areacode=${selectedArea}`)
       .then(res => res.json())
       .then(data => {
         setProjects(data);
@@ -79,7 +80,7 @@ export default function GeologicalLoggingView({ images }: GeologicalLoggingViewP
       setActiveHole('');
       return;
     }
-    fetch(`http://localhost:8000/api/holes?projectcode=${selectedProject}`)
+    fetch(`${API_BASE}/api/holes?projectcode=${selectedProject}`)
       .then(res => res.json())
       .then(data => {
         const ids = data.map((h: any) => h.HOLEID);
@@ -91,19 +92,19 @@ export default function GeologicalLoggingView({ images }: GeologicalLoggingViewP
 
   const fetchLogs = () => {
     if (!activeHole) return;
-    fetch(`http://localhost:8000/api/get_logs?hole_id=${activeHole}&dataset=Lithology`)
+    fetch(`${API_BASE}/api/get_logs?hole_id=${activeHole}&dataset=Lithology`)
       .then(res => res.json()).then(data => setLitoLogs(data)).catch(err => console.error(err));
       
-    fetch(`http://localhost:8000/api/get_logs?hole_id=${activeHole}&dataset=Alteration`)
+    fetch(`${API_BASE}/api/get_logs?hole_id=${activeHole}&dataset=Alteration`)
       .then(res => res.json()).then(data => setAltLogs(data)).catch(err => console.error(err));
       
-    fetch(`http://localhost:8000/api/get_logs?hole_id=${activeHole}&dataset=Structural`)
+    fetch(`${API_BASE}/api/get_logs?hole_id=${activeHole}&dataset=Structural`)
       .then(res => res.json()).then(data => setStrLogs(data)).catch(err => console.error(err));
       
-    fetch(`http://localhost:8000/api/get_logs?hole_id=${activeHole}&dataset=Mineralization`)
+    fetch(`${API_BASE}/api/get_logs?hole_id=${activeHole}&dataset=Mineralization`)
       .then(res => res.json()).then(data => setMinLogs(data)).catch(err => console.error(err));
       
-    fetch(`http://localhost:8000/api/get_logs?hole_id=${activeHole}&dataset=GeoComent`)
+    fetch(`${API_BASE}/api/get_logs?hole_id=${activeHole}&dataset=GeoComent`)
       .then(res => res.json()).then(data => setGeoLogs(data)).catch(err => console.error(err));
   };
 

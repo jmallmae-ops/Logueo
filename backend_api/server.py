@@ -1,8 +1,14 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory, abort
 import sqlite3
 import os
+import shutil
 
-app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Carpeta con el frontend compilado (vite build). En Docker: /app/static
+STATIC_DIR = os.environ.get('STATIC_DIR', os.path.join(BASE_DIR, '..', 'frontend_app', 'dist'))
+
+app = Flask(__name__, static_folder=None)
 
 @app.after_request
 def after_request(response):
@@ -11,7 +17,18 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'database', 'geology.sqlite')
+# Base de datos: en producción vive en un volumen persistente (/data).
+# Si no existe todavía, se copia la base semilla incluida en el repo.
+SEED_DB_PATH = os.path.join(BASE_DIR, 'database', 'geology.sqlite')
+DB_PATH = os.environ.get('DB_PATH', SEED_DB_PATH)
+
+def ensure_db():
+    if DB_PATH != SEED_DB_PATH and not os.path.exists(DB_PATH):
+        os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+        shutil.copyfile(SEED_DB_PATH, DB_PATH)
+        print(f"[init] Base de datos inicial copiada a {DB_PATH}")
+
+ensure_db()
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -238,9 +255,30 @@ def save_log():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-@app.route('/')
-def index():
+@app.route('/api/health')
+def health():
+    return jsonify({"status": "ok", "message": "Geological Logging API Running (Python/Flask)"})
+
+# ---------------------------------------------------------------------------
+# Frontend (React compilado). Cualquier ruta que no sea /api/* se sirve desde
+# STATIC_DIR; si el archivo no existe se devuelve index.html (SPA con HashRouter).
+# ---------------------------------------------------------------------------
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def frontend(path):
+    if path.startswith('api/'):
+        abort(404)
+    full = os.path.join(STATIC_DIR, path)
+    if path and os.path.isfile(full):
+        return send_from_directory(STATIC_DIR, path, conditional=True)
+    if path and os.path.isdir(full) and os.path.isfile(os.path.join(full, 'index.html')):
+        return send_from_directory(full, 'index.html')
+    index_file = os.path.join(STATIC_DIR, 'index.html')
+    if os.path.isfile(index_file):
+        return send_from_directory(STATIC_DIR, 'index.html')
+    # Sin frontend en este contenedor (despliegue con servicios separados): solo API
     return jsonify({"message": "Geological Logging API Running (Python/Flask)"})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    port = int(os.environ.get('PORT', 8000))
+    app.run(host='0.0.0.0', port=port, debug=os.environ.get('FLASK_DEBUG') == '1')
