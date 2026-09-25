@@ -1,0 +1,25 @@
+Strip log + RQD taco a taco en tiempo real
+==========================================
+
+1) Descomprime este zip DENTRO de:
+   C:\Users\jmallma\Documents\GitHub\Logueo
+   (acepta reemplazar archivos; respeta la carpeta frontend_app\...)
+
+2) Borra la carpeta del analizador compilado (ya no se usa):
+   frontend_app\public\RQD_Analyzer_Web_Ready
+
+3) Prueba local (PowerShell):
+   cd C:\Users\jmallma\Documents\GitHub\Logueo\frontend_app
+   npm install
+   npm run dev
+   -> abre la URL que muestra Vite, entra a "Light table"
+
+4) Si todo se ve bien, en GitHub Desktop o en consola:
+   git add -A
+   git commit -m "Strip log y RQD taco a taco en tiempo real"
+   git push
+   (el push a main dispara el auto-deploy en Coolify)
+
+Archivos nuevos:   src/lib/rqdMath.ts, src/lib/rqdDraw.ts,
+                   src/components/rqd/*  (RqdAnalyzer, StripLog, TacoRqdTable, css)
+Archivos cambiados: src/pages/Workspace.tsx, Dockerfile, deploy/nginx.conf

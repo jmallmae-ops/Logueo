@@ -1,31 +1,27 @@
 import React, { useState } from 'react';
 import GeologicalLoggingView from '../components/common/GeologicalLoggingView';
 import DatosView from '../components/common/DatosView';
+import RqdAnalyzer, { ProcessedImagePayload } from '../components/rqd/RqdAnalyzer';
 import '../assets/styles/main.css';
 
 export default function Workspace() {
   const [currentView, setCurrentView] = useState<'light_table' | 'gallery' | 'map' | 'datos' | 'logueo'>('logueo');
   const [rqdImages, setRqdImages] = useState<any[]>([]);
 
-  React.useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === 'RQD_IMAGE_PROCESSED') {
-        setRqdImages(prev => {
-          const newImg = event.data.payload;
-          // Replace if it already exists, or append
-          const existingIdx = prev.findIndex(img => img.id === newImg.id);
-          if (existingIdx !== -1) {
-            const next = [...prev];
-            next[existingIdx] = newImg;
-            return next;
-          }
-          return [...prev, newImg];
-        });
+  // El analizador RQD ahora es un componente (antes un iframe con postMessage).
+  const handleImageProcessed = React.useCallback((newImg: ProcessedImagePayload) => {
+    setRqdImages(prev => {
+      const existingIdx = prev.findIndex(img => img.id === newImg.id);
+      if (existingIdx !== -1) {
+        const next = [...prev];
+        next[existingIdx] = newImg;
+        return next;
       }
-    };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+      return [...prev, newImg];
+    });
   }, []);
+
+  const analyzerView = currentView === 'gallery' || currentView === 'map' ? currentView : 'light_table';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', backgroundColor: '#f5f6f8' }}>
@@ -80,9 +76,9 @@ export default function Workspace() {
            </div>
         )}
 
-        {/* RQD Analyzer iframe */}
+        {/* RQD Analyzer (siempre montado para no perder el trabajo al cambiar de vista) */}
         <div style={{ width: '100%', height: '100%', display: (currentView === 'light_table' || currentView === 'gallery' || currentView === 'map') ? 'block' : 'none' }}>
-           <iframe src="/RQD_Analyzer_Web_Ready/index.html" style={{ width: '100%', height: '100%', border: 'none' }} title="RQD Analyzer" />
+           <RqdAnalyzer view={analyzerView} onImageProcessed={handleImageProcessed} />
         </div>
         
       </div>

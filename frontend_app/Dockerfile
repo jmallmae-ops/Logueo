@@ -16,8 +16,8 @@ COPY --from=build /build/dist ./dist
 COPY deploy/fetch_lfs.py .
 ARG LFS_REPO=jmallmae-ops/Logueo
 ARG GITHUB_TOKEN=""
-# El modelo en /assets no lo usa la app (solo el RQD Analyzer)
-RUN rm -f dist/assets/*.onnx && GITHUB_TOKEN=${GITHUB_TOKEN} python fetch_lfs.py dist ${LFS_REPO}
+# Los modelos del RQD Analyzer se sirven desde /assets/*.onnx
+RUN GITHUB_TOKEN=${GITHUB_TOKEN} python fetch_lfs.py dist ${LFS_REPO}
 
 # ---------- 3) Servir con nginx en el puerto 3000 ----------
 FROM nginx:1.27-alpine
