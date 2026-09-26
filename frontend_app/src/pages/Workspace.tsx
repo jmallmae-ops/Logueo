@@ -41,7 +41,7 @@ export default function Workspace() {
           <button 
             onClick={() => setCurrentView('light_table')}
             style={{ backgroundColor: currentView === 'light_table' ? '#005b7f' : 'transparent', color: currentView === 'light_table' ? 'white' : '#555', border: 'none', padding: '6px 16px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', borderLeft: '1px solid #eee' }}>
-            📸 Light table
+            📏 RQD
           </button>
           <button 
             onClick={() => setCurrentView('gallery')}

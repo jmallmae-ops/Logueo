@@ -3,7 +3,7 @@ import {
   DISCOUNT_CLASSES, FRACTURE_CLASSES, SegmentPiece, TacoSegment,
   coreIntervals, depthToP, makeDepthFn, rqdClass,
 } from '../../lib/rqdMath';
-import { FRACTURE_COLORS, paintCoreMask, tacoNumbers } from '../../lib/rqdDraw';
+import { FRACTURE_COLORS, TACO_STATE_COLORS, paintCoreMask, tacoNumbers, tacoState } from '../../lib/rqdDraw';
 
 interface Props {
   item: any;                                   // ImageItem ya analizado
@@ -137,31 +137,6 @@ function RowStrip({ c, row, segs, focusSegment, scrollSegment, onFocus }: {
 
   return (
     <div ref={wrap} className={`strip-row ${focused ? 'focused' : ''}`}>
-      <div className="strip-ticks">
-        {ticks.map(t => <span key={t.d.toFixed(3)} style={{ left: `${pct(t.x)}%` }}>{t.d.toFixed(2)}</span>)}
-      </div>
-      <div className="strip-photo">
-        <canvas ref={ref} className="strip-canvas" />
-        {segs.slice(1).map(r => (
-          <div key={r.segIndex} className="strip-cut" style={{ left: `${pct(r.piece.x0)}%` }} />
-        ))}
-      </div>
-      {pins.length > 0 && (
-        <div className="strip-pins">
-          {pins.map(({ d, idx }: any) => {
-            const x = (d.box[0] + d.box[2]) / 2;
-            const info = item.result.tacoInfo?.[idx];
-            const cls = !info || !info.usable ? 'bad' : info.source === 'estimado' ? 'est' : 'ok';
-            return (
-              <button key={idx} type="button" className={`strip-pin ${cls}`} style={{ left: `${pct(x)}%` }}
-                onClick={() => c.onEditTaco(idx)} title="Corregir este taco">
-                <span className="pin-num">{c.nums.get(idx) ?? '?'}</span>
-                {info?.source === 'estimado' ? '~' : ''}{d.ocrValue ?? '?'} m ✎
-              </button>
-            );
-          })}
-        </div>
-      )}
       <div className="strip-bands">
         {segs.map(r => {
           const cls = rqdClass(r.seg.rqdPct);
@@ -183,6 +158,35 @@ function RowStrip({ c, row, segs, focusSegment, scrollSegment, onFocus }: {
           );
         })}
       </div>
+      <div className="strip-ticks">
+        {ticks.map(t => <span key={t.d.toFixed(3)} style={{ left: `${pct(t.x)}%` }}>{t.d.toFixed(2)}</span>)}
+      </div>
+      <div className="strip-photo">
+        <canvas ref={ref} className="strip-canvas" />
+        {segs.slice(1).map(r => (
+          <div key={r.segIndex} className="strip-cut" style={{ left: `${pct(r.piece.x0)}%` }} />
+        ))}
+      </div>
+      {pins.length > 0 && (
+        <div className="strip-pins">
+          {pins.map(({ d, idx }: any) => {
+            const x = (d.box[0] + d.box[2]) / 2;
+            const info = item.result.tacoInfo?.[idx];
+            const st = tacoState(info);
+            const px = pct(x);
+            // En los bordes el pin se ancla hacia dentro para no cortarse
+            const shift = px < 6 ? '0%' : px > 94 ? '-100%' : '-50%';
+            return (
+              <button key={idx} type="button" className="strip-pin"
+                style={{ left: `${px}%`, transform: `translateX(${shift})`, ['--stem' as any]: shift === '0%' ? '1px' : shift === '-100%' ? 'calc(100% - 1px)' : '50%', borderColor: TACO_STATE_COLORS[st], ['--pin' as any]: TACO_STATE_COLORS[st] }}
+                onClick={() => c.onEditTaco(idx)} title="Corregir este taco">
+                <span className="pin-num" style={{ background: TACO_STATE_COLORS[st] }}>{c.nums.get(idx) ?? '?'}</span>
+                {info?.source === 'estimado' ? '~' : ''}{d.ocrValue ?? '?'} m ✎
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

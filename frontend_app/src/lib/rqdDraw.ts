@@ -22,6 +22,13 @@ export interface CsvLogState {
 export const CORE_COLORS = ['#00FF00', '#00FFFF'];            // Núcleo, Taco
 export const FRACTURE_COLORS = ['#0000FF', '#FF00FF', '#FFA07A', '#FFFF00'];
 
+/** Color del número de taco según su estado (misma paleta en foto, lista y strip log). */
+export const TACO_STATE_COLORS = { ok: '#1565c0', est: '#e8a317', bad: '#d93025' } as const;
+export type TacoState = keyof typeof TACO_STATE_COLORS;
+export function tacoState(info: any): TacoState {
+  return !info || !info.usable ? 'bad' : info.source === 'estimado' ? 'est' : 'ok';
+}
+
 /** Número (1-based) de cada taco según su posición a lo largo del testigo. */
 export function tacoNumbers(item: any): Map<number, number> {
   const m = new Map<number, number>();
@@ -280,7 +287,7 @@ export function drawAnnotatedBox(canvas: HTMLCanvasElement, item: any, layers: D
       const n = nums.get(idx);
       const cx = (d.box[0] + d.box[2]) / 2, cy = d.box[1];
       if (n) {
-        const fill = !info || !info.usable ? '#d93025' : info.source === 'estimado' ? '#e8a317' : '#1565c0';
+        const fill = TACO_STATE_COLORS[tacoState(info)];
         ctx.beginPath();
         ctx.arc(cx, cy, R, 0, 2 * Math.PI);
         ctx.fillStyle = fill;

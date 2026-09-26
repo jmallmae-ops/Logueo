@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { TACO_STATE_COLORS, tacoState } from '../../lib/rqdDraw';
 
 interface Props {
   item: any;
@@ -88,7 +89,7 @@ export default function TacoList({ item, focusTaco, onChange, onReset, onLocate 
         return (
           <div key={idx} className={`taco-row ${chip.cls} ${focusTaco === idx ? 'focused' : ''}`}>
             <div className="taco-row-main">
-              <span className="taco-num">T{i + 1}</span>
+              <span className="taco-num" style={{ background: TACO_STATE_COLORS[tacoState(info)] }} title="Mismo color que en la foto">{i + 1}</span>
               <TacoThumb item={item} det={det} />
               <input
                 ref={el => { inputs.current[idx] = el; }}
