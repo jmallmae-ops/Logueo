@@ -145,7 +145,7 @@ function SegmentCard({ item, seg, index, focused, nums, onEditTaco }: {
         </span>
         {endTaco && (
           <button type="button" className="taco-pin" onClick={() => onEditTaco(seg.endTacoIdx!)} title="Corregir este taco">
-            T{nums.get(seg.endTacoIdx!)} · {String(endTaco.ocrValue ?? '?')} m ✎
+            T{nums.get(seg.endTacoIdx!)} · {item.result.tacoInfo?.[seg.endTacoIdx!]?.source === 'estimado' ? '~' : ''}{String(endTaco.ocrValue ?? '?')} m ✎
           </button>
         )}
       </div>

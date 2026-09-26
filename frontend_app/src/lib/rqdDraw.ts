@@ -22,9 +22,9 @@ export interface CsvLogState {
 export const CORE_COLORS = ['#00FF00', '#00FFFF'];            // Núcleo, Taco
 export const FRACTURE_COLORS = ['#0000FF', '#FF00FF', '#FFA07A', '#FFFF00'];
 
-const tacoLabel = (n: number | undefined, v: unknown) => {
+const tacoLabel = (n: number | undefined, v: unknown, estimated: boolean) => {
   const tag = n ? `T${n}` : 'Taco';
-  return v !== undefined && v !== null && v !== '' ? `${tag}: ${v}m` : `${tag}: ?`;
+  return v !== undefined && v !== null && v !== '' ? `${tag}: ${estimated ? '~' : ''}${v}m` : `${tag}: ?`;
 };
 
 /** Número (1-based) de cada taco según su posición a lo largo del testigo. */
@@ -153,7 +153,7 @@ export function drawAnnotatedBox(canvas: HTMLCanvasElement, item: any, layers: D
       ctx.strokeStyle = color;
       ctx.lineWidth = lw;
       ctx.strokeRect(d.box[0], d.box[1], d.box[2] - d.box[0], d.box[3] - d.box[1]);
-      outlinedText(tacoLabel(nums.get(idx), d.ocrValue), (d.box[0] + d.box[2]) / 2, d.box[1] + 5, color);
+      outlinedText(tacoLabel(nums.get(idx), d.ocrValue, item.result?.tacoInfo?.[idx]?.source === 'estimado'), (d.box[0] + d.box[2]) / 2, d.box[1] + 5, color);
     });
   }
   if (layers.showCores) {

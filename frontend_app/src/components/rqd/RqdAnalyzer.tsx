@@ -16,7 +16,7 @@ import { ImageItem } from '../../types';
 import { computeRqd, mergeHoleSegments, sortImagesForHole, parseDepth } from '../../lib/rqdMath';
 import { drawAnnotatedBox } from '../../lib/rqdDraw';
 import {
-  loadONNXRuntime, initTesseractWorker, recognizeCrop, drawImageToCanvas, preprocess,
+  loadONNXRuntime, initTesseractWorker, recognizeCropDetailed, drawImageToCanvas, preprocess,
   runInference, postprocess, runSegmentationInference, postprocessSegmentation, postprocessUnet,
 } from '../../services/modelService';
 import './rqd-strip.css';
@@ -458,7 +458,9 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
     const img = this.state.images[imgIdx];
     if (!img) return;
     const cajas = [...img.cajas];
-    cajas[cajaIdx] = { ...cajas[cajaIdx], ocrValue: value };
+    // Campo vacío = volver a automático (OCR o estimado); cualquier otro valor = manual
+    const auto = value.trim() === '';
+    cajas[cajaIdx] = { ...cajas[cajaIdx], ocrValue: auto ? null : value, manual: !auto };
     this.applyCompute(imgIdx, { cajas });
   };
 
@@ -467,7 +469,10 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
   };
 
   handleBoxWidthChange = (value: string) => {
-    this.setState(s => ({ globalBoxWidth: value, images: s.images.map(i => ({ ...i, boxWidth: value })) }));
+    // El ancho de caja define la escala usada para validar el OCR y estimar tacos
+    this.setState(s => ({ globalBoxWidth: value, images: s.images.map(i => ({ ...i, boxWidth: value })) }), () => {
+      this.state.images.forEach((img, i) => { if (img.status === 'done') this.applyCompute(i); });
+    });
   };
 
   scheduleRedraw = () => {
@@ -575,11 +580,14 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
           const c = document.createElement('canvas');
           c.width = w; c.height = h;
           c.getContext('2d')!.drawImage(seg.origImg, x0, y0, w, h, 0, 0, w, h);
-          d.ocrValue = await recognizeCrop(worker, c, true);
+          d.ocrCandidates = await recognizeCropDetailed(worker, c, true);
+          d.ocrValue = null;          // lo decide resolveTacos (OCR lógico o estimado)
+          d.manual = false;
         }
       } catch (err) {
         console.warn('Error durante OCR de tacos:', err);
       }
+      cajas.forEach(d => { if (d.classId === 1 && !d.ocrCandidates) { d.ocrCandidates = []; d.manual = false; } });
 
       // 3) Fracturas (solo las que caen dentro de un núcleo)
       const fracSize = 640;
@@ -961,6 +969,7 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
               item={cur}
               focusTaco={focusTaco}
               onChange={(cajaIdx, v) => this.handleTacoEdit(this.state.currentIndex, cajaIdx, v)}
+              onReset={cajaIdx => this.handleTacoEdit(this.state.currentIndex, cajaIdx, '')}
               onLocate={this.locateTaco}
             />
           ) : (

@@ -1,7 +1,2 @@
-Actualización: tacos numerados a la derecha + resultados abajo
-===============================================================
-1) Descomprime DENTRO de C:\Users\jmallma\Documents\GitHub\Logueo (reemplazar).
-2) BORRA este archivo (ya no se usa):
-   frontend_app\src\components\rqd\TacoRqdTable.tsx
-3) Prueba: cd frontend_app ; npm run dev
-4) git add -A ; git commit -m "Tacos numerados, longitud por mascara, resultados abajo" ; git push
+Descomprime DENTRO de C:\Users\jmallma\Documents\GitHub\Logueo (reemplazar archivos).
+Luego: cd frontend_app ; npm run dev   ->  probar  ->  git add -A ; git commit ; git push

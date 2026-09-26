@@ -99,10 +99,16 @@
 .taco-list-hint { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
 .taco-list-bad { color: var(--danger); font-weight: 600; }
 .taco-row {
-  display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 3px; padding: 6px 8px; border: 1px solid var(--border);
   border-radius: 8px; background: #fff;
 }
+.taco-row-main { display: flex; align-items: center; gap: 8px; }
 .taco-row.bad { border-color: #f3c1bc; background: #fdf7f6; }
+.taco-row.est { border-color: #f1d9a6; background: #fffbf2; }
+.taco-row.manual { border-color: #b8d4e8; }
+.taco-note { text-align: left; font-size: 10.5px; color: var(--text-muted); padding-left: 42px; }
+.taco-legend { display: flex; flex-wrap: wrap; gap: 4px; }
+.taco-row input.estimated { color: #a0661a; font-style: italic; border-style: dashed; }
 .taco-row.focused { box-shadow: 0 0 0 2px rgba(0, 79, 113, .25); border-color: var(--primary); }
 .taco-num {
   flex-shrink: 0; min-width: 34px; text-align: center; padding: 2px 0; border-radius: 6px;
@@ -118,6 +124,8 @@
 .taco-status { font-size: 10px; padding: 1px 6px; border-radius: 9px; white-space: nowrap; }
 .taco-status.ok { background: #e6f4ea; color: #1e7b34; }
 .taco-status.bad { background: #fce8e6; color: var(--danger); }
+.taco-status.est { background: #fdf0d5; color: #a0661a; }
+.taco-status.manual { background: #e3eef7; color: #1d5a85; }
 .taco-locate {
   margin-left: auto; border: 1px solid var(--border); background: #fff; border-radius: 4px;
   cursor: pointer; font-size: 14px; line-height: 1; padding: 4px 6px; color: var(--text-muted);

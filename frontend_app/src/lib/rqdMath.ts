@@ -3,7 +3,13 @@
 // public/RQD_Analyzer_Web_Ready). Mantiene exactamente las mismas reglas:
 //   - Filas = agrupación vertical de detecciones "Núcleo" (classId 0).
 //   - Anclas de profundidad = From de la caja, bordes izq/der de cada taco
-//     leído por OCR y To de la caja; se interpola linealmente entre anclas.
+//     y To de la caja; se interpola linealmente entre anclas.
+//   - Profundidad de cada taco (resolveTacos), en este orden:
+//       1) manual  → lo que escribió el usuario
+//       2) OCR     → si la confianza es suficiente y el valor es lógico
+//                    (dentro de From–To, en orden y coherente con el tamaño)
+//       3) estimado→ proporcional a la longitud de canal entre tacos conocidos
+//     Se resuelve en cada cálculo: cambiar un taco re-estima los demás.
 //   - Panizo / Zona Fracturada / Zona Plástica descuentan longitud.
 //   - Fracturas cortan los intervalos de núcleo; solo trozos >= 0.10 m suman RQD.
 
@@ -15,7 +21,19 @@ export interface Detection {
   box: Box;
   mask?: any;
   rawBox?: any;
-  ocrValue?: string | number | null;
+  ocrValue?: string | number | null;               // valor mostrado/usado (texto)
+  ocrCandidates?: { value: number; conf: number }[]; // lecturas OCR con confianza 0-100
+  manual?: boolean;                                  // true = lo escribió el usuario
+}
+
+export type TacoSource = 'manual' | 'ocr' | 'estimado';
+
+export interface TacoInfo {
+  source: TacoSource;
+  depth: number | null;      // profundidad usada (null si el taco no se usa)
+  usable: boolean;
+  ocrBest?: { value: number; conf: number };
+  note: string;              // por qué se usó/descartó
 }
 
 export interface Fila {
@@ -76,7 +94,9 @@ export interface RqdResult {
   fracturas_report: string[][];
   tacoSegments: TacoSegment[];
   rejectedTacos: RejectedTaco[];
-  tacoOrder: number[];            // índices de `cajas` ordenados a lo largo del testigo → T1, T2, ...
+  tacoOrder: number[];
+  tacoInfo: Record<number, TacoInfo>;
+  metersPerPx: number | null;       // escala de la caja (Ancho de caja / largo del canal)            // índices de `cajas` ordenados a lo largo del testigo → T1, T2, ...
 }
 
 export interface ComputeInput {
@@ -84,6 +104,7 @@ export interface ComputeInput {
   name: string;
   fromDepth: string;
   toDepth: string;
+  boxWidth?: string;
   origW: number;
   cajas: Detection[];
   fracturas: Detection[];
@@ -266,6 +287,158 @@ const fracturesInRow = (fracturas: Detection[], f: Fila) =>
       return cy >= f.y_min && cy <= f.y_max;
     });
 
+export const OCR_MIN_CONF = 50;      // confianza mínima de Tesseract para considerar una lectura
+export const OCR_TOL_MIN_M = 0.3;    // tolerancia mínima frente a la profundidad esperada
+export const OCR_TOL_FRAC = 0.3;     // + 30% del avance esperado desde el taco anterior
+
+interface ResolveOut {
+  cajas: Detection[];
+  info: Record<number, TacoInfo>;
+  order: number[];
+  metersPerPx: number | null;
+}
+
+const r2 = (v: number) => Math.round(v * 100) / 100;
+
+/**
+ * Decide la profundidad de cada taco: manual > OCR fiable y lógico > estimado.
+ * Las estimaciones usan la posición a lo largo del canal de testigo (tamaño
+ * real en la foto), así que se actualizan cuando cambia cualquier otro taco.
+ */
+export function resolveTacos(input: ComputeInput, filas: Fila[]): ResolveOut {
+  const { cajas } = input;
+  const from = parseFloat(input.fromDepth), to = parseFloat(input.toDepth);
+
+  // Canal de testigo por fila (de la primera a la última caja de núcleo)
+  const channels = filas.map(f => {
+    let x0 = Infinity, x1 = -Infinity;
+    f.items.forEach(it => { x0 = Math.min(x0, it[4][0]); x1 = Math.max(x1, it[4][2]); });
+    return { x0, x1, len: Math.max(0, x1 - x0) };
+  });
+  const cum: number[] = [];
+  channels.reduce((acc, c, i) => { cum[i] = acc; return acc + c.len; }, 0);
+  const totalS = channels.reduce((a, c) => a + c.len, 0);
+  const sOf = (row: number, x: number) => cum[row] + Math.min(Math.max(x - channels[row].x0, 0), channels[row].len);
+
+  // Escala por el ancho de caja: la fila más larga (mediana) = Ancho de caja
+  const bw = parseFloat(input.boxWidth || '');
+  const lens = channels.map(c => c.len).filter(l => l > 0).sort((a, b) => a - b);
+  const medLen = lens.length ? lens[Math.floor(lens.length / 2)] : 0;
+  const mpp = bw > 0 && medLen > 0 ? bw / medLen : totalS > 0 ? (to - from) / totalS : null;
+
+  type T = { idx: number; row: number; s: number };
+  const tacos: T[] = [];
+  const outside: number[] = [];
+  cajas.forEach((d, idx) => {
+    if (d.classId !== 1) return;
+    const row = rowOfY(filas, (d.box[1] + d.box[3]) / 2);
+    if (row === -1) { outside.push(idx); return; }
+    tacos.push({ idx, row, s: sOf(row, (d.box[0] + d.box[2]) / 2) });
+  });
+  tacos.sort((a, b) => a.s - b.s);
+
+  const info: Record<number, TacoInfo> = {};
+  // Lecturas OCR: `ocrCandidates`. Datos de la versión anterior solo traían
+  // `ocrValue`; esa lectura se convierte en candidata una sola vez (abajo).
+  const candidatesOf = (d: Detection): { value: number; conf: number }[] => {
+    if (d.ocrCandidates !== undefined) return d.ocrCandidates;
+    const legacy = d.manual ? null : parseDepth(d.ocrValue);
+    return legacy !== null ? [{ value: legacy, conf: 100 }] : [];
+  };
+  const bestOcr = (d: Detection) => candidatesOf(d)[0];
+
+  // Anclas aceptadas: From, manuales válidos, OCR fiables, To
+  type A = { s: number; depth: number };
+  const accepted: A[] = [{ s: 0, depth: from }];
+  const nextManualBound = (k: number): A => {
+    for (let j = k + 1; j < tacos.length; j++) {
+      const d = cajas[tacos[j].idx];
+      const v = d.manual ? parseDepth(d.ocrValue) : null;
+      if (v !== null && v >= accepted[accepted.length - 1].depth && v <= to) return { s: tacos[j].s, depth: v };
+    }
+    return { s: totalS, depth: to };
+  };
+
+  tacos.forEach((t, k) => {
+    const d = cajas[t.idx];
+    const prev = accepted[accepted.length - 1];
+    const ocrBest = bestOcr(d);
+
+    if (d.manual) {
+      const v = parseDepth(d.ocrValue);
+      if (v === null) {
+        info[t.idx] = { source: 'manual', depth: null, usable: false, ocrBest, note: 'Valor manual vacío o inválido' };
+      } else if (v < prev.depth || v > to) {
+        info[t.idx] = { source: 'manual', depth: v, usable: false, ocrBest, note: `Fuera de orden: debe estar entre ${prev.depth.toFixed(2)} y ${to.toFixed(2)} m` };
+      } else {
+        accepted.push({ s: t.s, depth: v });
+        info[t.idx] = { source: 'manual', depth: v, usable: true, ocrBest, note: 'Ingresado manualmente' };
+      }
+      return;
+    }
+
+    // OCR: elige la lectura más confiable que sea lógica
+    const bound = nextManualBound(k);
+    const expScale = mpp !== null ? prev.depth + (t.s - prev.s) * mpp : null;
+    const expInterp = bound.s > prev.s ? prev.depth + ((bound.depth - prev.depth) * (t.s - prev.s)) / (bound.s - prev.s) : null;
+    const advance = expScale !== null ? expScale - prev.depth : expInterp !== null ? expInterp - prev.depth : 0;
+    const tol = Math.max(OCR_TOL_MIN_M, OCR_TOL_FRAC * Math.max(0, advance));
+    let why = 'Sin lectura OCR';
+    const cands = candidatesOf(d);
+    if (cands.length) why = `OCR ${cands[0].value.toFixed(2)} (${Math.round(cands[0].conf)}%)`;
+    let pick: { value: number; conf: number } | undefined;
+    for (const c of cands) {
+      if (c.conf < OCR_MIN_CONF) { if (c === cands[0]) why += ': confianza baja'; continue; }
+      if (c.value < prev.depth || c.value > bound.depth + 0.01) { if (c === cands[0]) why += ': fuera de orden / de From–To'; continue; }
+      const near = (e: number | null) => e !== null && Math.abs(c.value - e) <= tol;
+      if (!near(expScale) && !near(expInterp)) { if (c === cands[0]) why += ': no coincide con el tamaño'; continue; }
+      pick = c;
+      break;
+    }
+    if (pick) {
+      accepted.push({ s: t.s, depth: pick.value });
+      info[t.idx] = {
+        source: 'ocr', depth: pick.value, usable: true, ocrBest,
+        note: `OCR ${pick.value.toFixed(2)} m (${Math.round(pick.conf)}%)${pick !== cands[0] ? ' · 2ª lectura, la 1ª no era lógica' : ''}`,
+      };
+    } else {
+      info[t.idx] = { source: 'estimado', depth: null, usable: true, ocrBest, note: why };
+    }
+  });
+  accepted.push({ s: totalS, depth: to });
+
+  // Estimación por tamaño entre las anclas aceptadas vecinas
+  tacos.forEach(t => {
+    const inf = info[t.idx];
+    if (inf.source !== 'estimado') return;
+    let a = accepted[0], b = accepted[accepted.length - 1];
+    for (const x of accepted) { if (x.s <= t.s) a = x; }
+    for (let i = accepted.length - 1; i >= 0; i--) { if (accepted[i].s >= t.s) b = accepted[i]; }
+    let v: number;
+    if (b.s > a.s) v = a.depth + ((b.depth - a.depth) * (t.s - a.s)) / (b.s - a.s);
+    else v = mpp !== null ? a.depth + (t.s - a.s) * mpp : a.depth;
+    v = Math.min(Math.max(v, a.depth), b.depth);
+    inf.depth = r2(v);
+    inf.note = `Estimado por tamaño (${inf.note})`;
+  });
+
+  outside.forEach(idx => {
+    info[idx] = { source: cajas[idx].manual ? 'manual' : 'estimado', depth: null, usable: false, ocrBest: bestOcr(cajas[idx]), note: 'Fuera del testigo detectado' };
+  });
+
+  // Valor visible en cada taco (los manuales conservan lo que se escribió)
+  const out = cajas.map((d, idx) => {
+    if (d.classId !== 1) return d;
+    const inf = info[idx];
+    let nd = d.ocrCandidates === undefined ? { ...d, ocrCandidates: candidatesOf(d) } : d;
+    if (!inf || d.manual || inf.depth === null) return nd;
+    const txt = inf.depth.toFixed(2);
+    if (nd.ocrValue !== txt) nd = { ...nd, ocrValue: txt };
+    return nd;
+  });
+  return { cajas: out, info, order: tacos.map(t => t.idx).concat(outside), metersPerPx: mpp };
+}
+
 /**
  * Calcula Recovery/RQD de una caja. Es barato (solo aritmética), así que se
  * puede llamar en cada edición para tener el strip log en tiempo real.
@@ -284,11 +457,15 @@ export function computeRqd(input: ComputeInput, initial = false): ComputeOutput 
   const geom = input.scale ? { scale: input.scale, padX: input.padX || 0, padY: input.padY || 0 } : undefined;
   const filas = groupRows(cajas, geom);
 
+  // ---- Profundidad de cada taco: manual > OCR lógico > estimado ----
+  const resolved = resolveTacos(input, filas);
+  const cajasR = resolved.cajas;
+
   // ---- Anclas de profundidad ----
   const anchors: Anchor[] = [{ p: 0, depth: from }];
-  cajas.forEach((d, idx) => {
-    if (d.classId !== 1) return;
-    const val = parseDepth(d.ocrValue);
+  cajasR.forEach((d, idx) => {
+    if (d.classId !== 1 || !resolved.info[idx]?.usable) return;
+    const val = resolved.info[idx].depth;
     if (val === null) return;
     const row = rowOfY(filas, (d.box[1] + d.box[3]) / 2);
     if (row === -1) return;
@@ -304,10 +481,10 @@ export function computeRqd(input: ComputeInput, initial = false): ComputeOutput 
   }
   const depthAt = makeDepthFn(valid, origW, to);
 
-  // ---- Tacos descartados (para corregirlos en el strip log) ----
+  // ---- Tacos que no entran en el cálculo ----
   const usedTacos = new Set(valid.filter(a => a.tacoIdx !== undefined).map(a => a.tacoIdx));
   const rejectedTacos: RejectedTaco[] = [];
-  cajas.forEach((d, idx) => {
+  cajasR.forEach((d, idx) => {
     if (d.classId !== 1 || usedTacos.has(idx)) return;
     const row = rowOfY(filas, (d.box[1] + d.box[3]) / 2);
     const val = parseDepth(d.ocrValue);
@@ -430,33 +607,14 @@ export function computeRqd(input: ComputeInput, initial = false): ComputeOutput 
     });
   }
 
-  // ---- Limpieza/relleno de tacos (solo tras la inferencia) ----
-  let outCajas = cajas;
-  if (initial) {
-    outCajas = cajas
-      .filter(d => d.classId !== 1 || rowOfY(filas, (d.box[1] + d.box[3]) / 2) !== -1)
-      .map(d => {
-        if (d.classId !== 1 || parseDepth(d.ocrValue) !== null) return d;
-        const row = rowOfY(filas, (d.box[1] + d.box[3]) / 2);
-        return { ...d, ocrValue: depthAt(row, (d.box[0] + d.box[2]) / 2).toFixed(2) };
-      });
-  }
-
-  if (initial && outCajas !== cajas) {
-    // Recalcula con los tacos rellenados para que el resultado quede coherente
+  // Tras la inferencia se descartan tacos que no caen sobre ninguna fila
+  const outCajas = initial
+    ? cajasR.filter(d => d.classId !== 1 || rowOfY(filas, (d.box[1] + d.box[3]) / 2) !== -1)
+    : cajasR;
+  if (initial && outCajas.length !== cajasR.length) {
     return computeRqd({ ...input, cajas: outCajas }, false);
   }
-
-  // ---- Numeración de tacos a lo largo del testigo (fila, x) ----
-  const tacoOrder = cajas
-    .map((d, idx) => ({ d, idx }))
-    .filter(t => t.d.classId === 1)
-    .map(t => {
-      const row = rowOfY(filas, (t.d.box[1] + t.d.box[3]) / 2);
-      return { idx: t.idx, key: (row === -1 ? filas.length + (t.d.box[1] / 1e6) : row) * origW + t.d.box[0] };
-    })
-    .sort((a, b) => a.key - b.key)
-    .map(t => t.idx);
+  const tacoOrder = resolved.order;
 
   const csvRow = [
     input.collar, input.fromDepth, input.toDepth,
@@ -485,6 +643,8 @@ export function computeRqd(input: ComputeInput, initial = false): ComputeOutput 
       tacoSegments,
       rejectedTacos,
       tacoOrder,
+      tacoInfo: resolved.info,
+      metersPerPx: resolved.metersPerPx,
     },
   };
 }

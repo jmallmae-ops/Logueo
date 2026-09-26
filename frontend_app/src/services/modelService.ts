@@ -75,7 +75,19 @@ function extractNumber(text: string): number | null {
   }
 }
 
-export async function recognizeCrop(worker: any, canvas: HTMLCanvasElement, rotate90: boolean = false): Promise<number | null> {
+export interface OcrReading { value: number; conf: number; }
+
+/** Igual que recognizeCrop, pero devuelve todas las lecturas con su confianza (0-100). */
+export async function recognizeCropDetailed(worker: any, canvas: HTMLCanvasElement, rotate90: boolean = false): Promise<OcrReading[]> {
+  const readings: OcrReading[] = [];
+  await recognizeCrop(worker, canvas, rotate90, readings);
+  // Una lectura por valor (la de mayor confianza), ordenadas de mejor a peor
+  const best = new Map<number, number>();
+  readings.forEach(r => { if ((best.get(r.value) ?? -1) < r.conf) best.set(r.value, r.conf); });
+  return Array.from(best.entries()).map(([value, conf]) => ({ value, conf })).sort((a, b) => b.conf - a.conf);
+}
+
+export async function recognizeCrop(worker: any, canvas: HTMLCanvasElement, rotate90: boolean = false, collect?: OcrReading[]): Promise<number | null> {
   const psmModes = [3, 7]; 
   
   let angles = [0];
@@ -180,6 +192,7 @@ export async function recognizeCrop(worker: any, canvas: HTMLCanvasElement, rota
       
       let num = extractNumber(ocrData.text);
       if (num !== null && num > 1000) num = num / 100;
+      if (num !== null && collect) collect.push({ value: num, conf: ocrData.confidence });
       
       if (num !== null && ocrData.confidence > bestConf) {
         bestConf = ocrData.confidence;
