@@ -77,10 +77,6 @@ export default function TacoList({ item, focusTaco, onChange, onReset, onLocate 
         <span className="taco-status manual">manual {nMan}</span>
         {bad > 0 && <span className="taco-status bad">no usado {bad}</span>}
       </div>
-      <div className="taco-list-hint">
-        Se usa el OCR si es confiable y lógico; si no, se estima por tamaño entre los tacos conocidos.
-        Al corregir un taco los estimados se recalculan. Vacía el campo (↺) para volver a automático.
-      </div>
       {order.map((idx, i) => {
         const det = item.cajas[idx];
         const info = infoOf(idx);

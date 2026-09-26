@@ -296,7 +296,7 @@ export function drawAnnotatedBox(canvas: HTMLCanvasElement, item: any, layers: D
         ctx.strokeStyle = '#ffffff';
         ctx.stroke();
         ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${Math.round(R * (n >= 10 ? 1.0 : 1.25))}px Arial`;
+        ctx.font = `bold ${Math.round(R * (n >= 10 ? 1.0 : 1.25))}px Inter, Arial, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(String(n), cx, cy + 1);

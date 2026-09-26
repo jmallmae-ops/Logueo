@@ -276,25 +276,6 @@ body {
   justify-content: center;
 }
 
-/* Tacos list layout */
-.taco-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.taco-row label {
-  width: 60px;
-  margin: 0;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-.taco-row span {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
 /* List group for images */
 .image-list-item {
   display: flex;

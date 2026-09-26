@@ -857,7 +857,7 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
     const label = (top: string, text: string, key: string) => (
       <div key={key} style={{ position: 'absolute', top, right: 0, width: '100%', height: 1 }}>
         <div style={{ position: 'absolute', right: 0, width: 8, height: 1, backgroundColor: '#888' }} />
-        <div style={{ position: 'absolute', right: 12, top: -6, fontSize: 11, color: '#666', fontFamily: 'sans-serif' }}>{text}</div>
+        <div style={{ position: 'absolute', right: 12, top: -6, fontSize: 11, color: '#666', fontFamily: 'inherit' }}>{text}</div>
       </div>
     );
     return (
@@ -897,7 +897,7 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
           boxShadow: '0 0 10px rgba(0,0,0,0.05)', margin: '40px auto', width: 'fit-content', position: 'relative',
           transform: `translate(${this.zoomOffsetX}px, ${this.zoomOffsetY}px) scale(${this.zoomScale})`, transformOrigin: '0 0',
         }}>
-          <div style={{ paddingLeft: 80, marginBottom: 8, fontFamily: 'sans-serif' }}>
+          <div style={{ paddingLeft: 80, marginBottom: 8, fontFamily: 'inherit' }}>
             <div style={{ fontSize: 18 }}>{images[0]?.collar || '—'}</div>
             <div style={{ fontSize: 18, fontWeight: 'bold' }}>Core Boxes</div>
             <div style={{ fontSize: 16 }}>Dry</div>
