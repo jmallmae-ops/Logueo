@@ -5,6 +5,7 @@ interface Props {
   images: any[];
   currentImageId: string | null;
   collapsed: boolean;
+  height: number;
   onToggle: () => void;
   onSelect: (imageId: string, segIndex: number) => void;
 }
@@ -30,7 +31,7 @@ function downloadCsv(rows: HoleSegment[]) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-export default function ResultsTable({ images, currentImageId, collapsed, onToggle, onSelect }: Props) {
+export default function ResultsTable({ images, currentImageId, collapsed, height, onToggle, onSelect }: Props) {
   // Se recalcula con cada cambio de `images` → tiempo real
   const rows = useMemo(() => mergeHoleSegments(images), [images]);
   const len = rows.reduce((s, r) => s + (r.to - r.from), 0);
@@ -40,7 +41,7 @@ export default function ResultsTable({ images, currentImageId, collapsed, onTogg
   const totRqd = rec > 0 ? (rqd / rec) * 100 : 0;
 
   return (
-    <div className={`results-dock ${collapsed ? 'collapsed' : ''}`}>
+    <div className={`results-dock ${collapsed ? 'collapsed' : ''}`} style={collapsed ? undefined : { height }}>
       <div className="results-head">
         <button type="button" className="results-toggle" onClick={onToggle}>{collapsed ? '▲' : '▼'} Resultados taco a taco</button>
         {rows.length > 0 && (

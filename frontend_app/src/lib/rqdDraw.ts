@@ -22,11 +22,6 @@ export interface CsvLogState {
 export const CORE_COLORS = ['#00FF00', '#00FFFF'];            // Núcleo, Taco
 export const FRACTURE_COLORS = ['#0000FF', '#FF00FF', '#FFA07A', '#FFFF00'];
 
-const tacoLabel = (n: number | undefined, v: unknown, estimated: boolean) => {
-  const tag = n ? `T${n}` : 'Taco';
-  return v !== undefined && v !== null && v !== '' ? `${tag}: ${estimated ? '~' : ''}${v}m` : `${tag}: ?`;
-};
-
 /** Número (1-based) de cada taco según su posición a lo largo del testigo. */
 export function tacoNumbers(item: any): Map<number, number> {
   const m = new Map<number, number>();
@@ -147,13 +142,13 @@ export function drawAnnotatedBox(canvas: HTMLCanvasElement, item: any, layers: D
   ctx.drawImage(overlay, 0, 0);
 
   if (layers.showTacos) {
-    item.cajas.forEach((d: Detection, idx: number) => {
+    item.cajas.forEach((d: Detection) => {
       if (d.classId !== 1) return;
       const color = CORE_COLORS[d.classId];
       ctx.strokeStyle = color;
       ctx.lineWidth = lw;
       ctx.strokeRect(d.box[0], d.box[1], d.box[2] - d.box[0], d.box[3] - d.box[1]);
-      outlinedText(tacoLabel(nums.get(idx), d.ocrValue, item.result?.tacoInfo?.[idx]?.source === 'estimado'), (d.box[0] + d.box[2]) / 2, d.box[1] + 5, color);
+
     });
   }
   if (layers.showCores) {
@@ -270,20 +265,41 @@ export function drawAnnotatedBox(canvas: HTMLCanvasElement, item: any, layers: D
         ctx.textBaseline = 'bottom';
         ctx.fillText(dm.toFixed(2) + 'm', x, y - tickLen - pad);
       }
-      rowTacos.forEach(t => {
-        const cx = (t.box[0] + t.box[2]) / 2;
-        ctx.beginPath();
-        ctx.arc(cx, y, lw * 2, 0, 2 * Math.PI);
-        ctx.strokeStyle = 'red';
-        ctx.lineWidth = lw * 1.5;
-        ctx.stroke();
-        if (t.ocrValue !== null && t.ocrValue !== undefined) {
-          ctx.fillStyle = 'red';
-          ctx.font = `bold ${Math.floor(tickFont * 1.3)}px Arial`;
-          ctx.fillText(t.ocrValue + 'm', cx, y - tickLen - pad - tickFont);
-        }
-      });
     });
   }
 
+
+  // ---- Número de cada taco (encima de todo) ----
+  if (layers.showTacos) {
+    const R = Math.max(14, Math.round(fontPx * 1.1));
+    item.cajas.forEach((d: Detection, idx: number) => {
+      if (d.classId !== 1) return;
+      const color = CORE_COLORS[1];
+      const info = item.result?.tacoInfo?.[idx];
+      // Número de taco en círculo (azul = OCR/manual, ámbar = estimado, rojo = no usado)
+      const n = nums.get(idx);
+      const cx = (d.box[0] + d.box[2]) / 2, cy = d.box[1];
+      if (n) {
+        const fill = !info || !info.usable ? '#d93025' : info.source === 'estimado' ? '#e8a317' : '#1565c0';
+        ctx.beginPath();
+        ctx.arc(cx, cy, R, 0, 2 * Math.PI);
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.lineWidth = Math.max(3, R / 6);
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${Math.round(R * (n >= 10 ? 1.0 : 1.25))}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(n), cx, cy + 1);
+        ctx.font = `bold ${fontPx}px Arial`;
+        ctx.lineWidth = lw;
+      }
+      const v = d.ocrValue;
+      if (v !== undefined && v !== null && v !== '') {
+        outlinedText(`${info?.source === 'estimado' ? '~' : ''}${v} m`, cx, cy + (n ? R + 4 : 5), color);
+      }
+    });
+  }
 }

@@ -6,10 +6,15 @@ interface Props {
   item: any;                                   // ImageItem ya analizado
   focusSegment: number | null;                 // tramo a resaltar/scroll (desde la tabla)
   onEditTaco: (cajaIdx: number) => void;       // abre la lista de tacos en ese taco
+  showCore: boolean;                           // máscara verde del modelo de core
+  showFractures: boolean;
+  onToggle: (key: 'stripShowCore' | 'stripShowFractures', value: boolean) => void;
 }
 
+interface Layers { showCore: boolean; showFractures: boolean; }
+
 /** Recorte de la foto con la máscara verde (lo que se mide como testigo). */
-function PieceStrip({ item, piece, nums }: { item: any; piece: SegmentPiece; nums: Map<number, number> }) {
+function PieceStrip({ item, piece, nums, layers }: { item: any; piece: SegmentPiece; nums: Map<number, number>; layers: Layers }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const fila = item.result.filas[piece.row];
 
@@ -41,16 +46,18 @@ function PieceStrip({ item, piece, nums }: { item: any; piece: SegmentPiece; num
       const cy = (d.box[1] + d.box[3]) / 2;
       return cy >= fila.y_min && cy <= fila.y_max && d.box[2] > piece.x0 && d.box[0] < piece.x1;
     });
-    cores.forEach((d: any) => paintCoreMask(ctx, item, d, '#00FF00', 110));
-    ctx.fillStyle = '#00d000';
-    const barH = Math.max(4, (fila.y_max - fila.y_min) * 0.06);
-    cores.forEach((d: any) => coreIntervals(d, geom).forEach(([a, b]) => {
-      const x0 = Math.max(a, piece.x0), x1 = Math.min(b, piece.x1);
-      if (x0 < x1) ctx.fillRect(x0, fila.y_max - barH, x1 - x0, barH);
-    }));
+    if (layers.showCore) {
+      cores.forEach((d: any) => paintCoreMask(ctx, item, d, '#00FF00', 110));
+      ctx.fillStyle = '#00d000';
+      const barH = Math.max(4, (fila.y_max - fila.y_min) * 0.06);
+      cores.forEach((d: any) => coreIntervals(d, geom).forEach(([a, b]) => {
+        const x0 = Math.max(a, piece.x0), x1 = Math.min(b, piece.x1);
+        if (x0 < x1) ctx.fillRect(x0, fila.y_max - barH, x1 - x0, barH);
+      }));
+    }
 
     // Fracturas y zonas que descuentan
-    item.fracturas.forEach((d: any) => {
+    if (layers.showFractures) item.fracturas.forEach((d: any) => {
       const cy = (d.box[1] + d.box[3]) / 2;
       if (cy < fila.y_min || cy > fila.y_max) return;
       const x0 = Math.max(d.box[0], piece.x0), x1 = Math.min(d.box[2], piece.x1);
@@ -90,7 +97,7 @@ function PieceStrip({ item, piece, nums }: { item: any; piece: SegmentPiece; num
       }
     });
     ctx.restore();
-  }, [item, piece, fila, nums]);
+  }, [item, piece, fila, nums, layers.showCore, layers.showFractures]);
 
   const widthPct = ((piece.x1 - piece.x0) / item.origW) * 100;
   const mid = (piece.depth0 + piece.depth1) / 2;
@@ -109,9 +116,9 @@ function PieceStrip({ item, piece, nums }: { item: any; piece: SegmentPiece; num
   );
 }
 
-function SegmentCard({ item, seg, index, focused, nums, onEditTaco }: {
+function SegmentCard({ item, seg, index, focused, nums, layers, onEditTaco }: {
   item: any; seg: TacoSegment; index: number; focused: boolean;
-  nums: Map<number, number>; onEditTaco: (idx: number) => void;
+  nums: Map<number, number>; layers: Layers; onEditTaco: (idx: number) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -137,7 +144,7 @@ function SegmentCard({ item, seg, index, focused, nums, onEditTaco }: {
         <div className="strip-bar-rec" style={{ width: `${Math.min(100, seg.recPct)}%` }} />
         <div className="strip-bar-rqd" style={{ width: `${Math.min(100, (seg.rqdM / seg.lengthM) * 100)}%`, background: cls.color }} />
       </div>
-      {seg.pieces.map((p, k) => <PieceStrip key={`${index}-${k}`} item={item} piece={p} nums={nums} />)}
+      {seg.pieces.map((p, k) => <PieceStrip key={`${index}-${k}`} item={item} piece={p} nums={nums} layers={layers} />)}
       <div className="strip-seg-foot">
         <span>
           Rec {seg.recM.toFixed(2)} m · RQD {seg.rqdM.toFixed(2)} m
@@ -153,7 +160,8 @@ function SegmentCard({ item, seg, index, focused, nums, onEditTaco }: {
   );
 }
 
-export default function StripLog({ item, focusSegment, onEditTaco }: Props) {
+export default function StripLog({ item, focusSegment, onEditTaco, showCore, showFractures, onToggle }: Props) {
+  const layers = React.useMemo(() => ({ showCore, showFractures }), [showCore, showFractures]);
   const nums = React.useMemo(() => (item?.result ? tacoNumbers(item) : new Map<number, number>()), [item]);
   if (!item) return <div className="strip-empty">Selecciona una caja.</div>;
   if (item.status !== 'done' || !item.result?.tacoSegments) {
@@ -166,13 +174,17 @@ export default function StripLog({ item, focusSegment, onEditTaco }: Props) {
       <div className="strip-caption">
         {item.collar || item.name} · {item.fromDepth} – {item.toDepth} m · {tacoSegments.length} tramos
       </div>
+      <div className="strip-toggles">
+        <label><input type="checkbox" checked={showCore} onChange={e => onToggle('stripShowCore', e.target.checked)} /> Reconocimiento de núcleo</label>
+        <label><input type="checkbox" checked={showFractures} onChange={e => onToggle('stripShowFractures', e.target.checked)} /> Fracturas</label>
+      </div>
       {rejectedTacos.length > 0 && (
         <button type="button" className="strip-rejected" onClick={() => onEditTaco(rejectedTacos[0].tacoIdx)}>
           {rejectedTacos.length} taco(s) sin usar en el cálculo — revisar en la lista de tacos
         </button>
       )}
       {tacoSegments.map((seg: TacoSegment, i: number) => (
-        <SegmentCard key={i} item={item} seg={seg} index={i} focused={focusSegment === i} nums={nums} onEditTaco={onEditTaco} />
+        <SegmentCard key={i} item={item} seg={seg} index={i} focused={focusSegment === i} nums={nums} layers={layers} onEditTaco={onEditTaco} />
       ))}
     </div>
   );

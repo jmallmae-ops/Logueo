@@ -11,6 +11,7 @@ import ImagoLoginModal from '../common/ImagoLoginModal';
 import CameraCropModal from '../common/CameraCropModal';
 import StripLog from './StripLog';
 import TacoList from './TacoList';
+import Splitter from './Splitter';
 import ResultsTable, { RESULT_HEADERS, resultRow } from './ResultsTable';
 import { ImageItem } from '../../types';
 import { computeRqd, mergeHoleSegments, sortImagesForHole, parseDepth } from '../../lib/rqdMath';
@@ -64,6 +65,26 @@ interface State {
   focusSegment: number | null;
   focusTaco: number | null;
   resultsCollapsed: boolean;
+  // Paneles flexibles (se recuerdan en el navegador)
+  leftOpen: boolean;
+  leftW: number;
+  rightW: number;
+  resultsH: number;
+  stripShowCore: boolean;
+  stripShowFractures: boolean;
+}
+
+const LAYOUT_KEY = 'rqd-analyzer-layout-v1';
+const LAYOUT_FIELDS = ['leftOpen', 'leftW', 'rightW', 'resultsH', 'resultsCollapsed', 'stripOpen', 'stripShowCore', 'stripShowFractures'] as const;
+const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
+
+function loadLayout(): Partial<State> {
+  try {
+    const raw = localStorage.getItem(LAYOUT_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
 }
 
 // Rutas de los modelos (servidos desde public/assets; en Docker los baja fetch_lfs.py)
@@ -167,9 +188,24 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
     focusSegment: null,
     focusTaco: null,
     resultsCollapsed: false,
+    leftOpen: true,
+    leftW: 340,
+    rightW: 440,
+    resultsH: 240,
+    stripShowCore: true,
+    stripShowFractures: true,
+    ...loadLayout(),
   };
+  dragBase = 0;
 
   componentDidUpdate(_: Props, prev: State) {
+    if (LAYOUT_FIELDS.some(k => prev[k] !== this.state[k])) {
+      try {
+        const o: Record<string, unknown> = {};
+        LAYOUT_FIELDS.forEach(k => { o[k] = this.state[k]; });
+        localStorage.setItem(LAYOUT_KEY, JSON.stringify(o));
+      } catch { /* sin almacenamiento: no pasa nada */ }
+    }
     if (prev.currentIndex !== this.state.currentIndex && this.state.currentIndex >= 0) {
       this.drawCanvasForCurrentItem();
       if (this.state.focusTaco !== null) this.setState({ focusTaco: null });
@@ -703,9 +739,12 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
   renderSidebar(cur: ImageItem | null) {
     const { images, currentIndex } = this.state;
     return (
-      <div className="rqd-sidebar">
+      <div className="rqd-sidebar" style={{ width: this.state.leftW }}>
         <div className="rqd-card">
-          <h6>Panel de Acciones</h6>
+          <div className="rqd-card-title-row">
+            <h6>Panel de Acciones</h6>
+            <button type="button" className="rqd-panel-btn" onClick={() => this.setState({ leftOpen: false })} title="Ocultar panel">◀</button>
+          </div>
           <details className="w-100 mb-2" style={{ cursor: 'pointer' }}>
             <summary className="btn btn-primary w-100" style={{ listStyle: 'none' }}>1. 📁 Cargar Imágenes ▼</summary>
             <div className="d-flex flex-column mt-2" style={{ gap: 8, padding: 12, border: '1px solid #e0e0e0', borderRadius: 6, backgroundColor: '#f9fafb' }}>
@@ -945,7 +984,7 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
     const { stripOpen, stripTab, focusSegment, focusTaco } = this.state;
     if (!stripOpen) {
       return (
-        <button type="button" className="rqd-strip-reopen" onClick={() => this.setState({ stripOpen: true })} title="Mostrar panel">
+        <button type="button" className="rqd-side-reopen right" onClick={() => this.setState({ stripOpen: true })} title="Mostrar panel">
           ◀ Tacos / Strip log
         </button>
       );
@@ -953,7 +992,7 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
     const nTacos = cur?.result?.tacoOrder?.length ?? 0;
     const nBad = cur?.result?.rejectedTacos?.length ?? 0;
     return (
-      <aside className="rqd-strip-panel">
+      <aside className="rqd-strip-panel" style={{ width: this.state.rightW }}>
         <div className="rqd-strip-header">
           <div className="rqd-strip-tabs">
             <button type="button" className={stripTab === 'tacos' ? 'active' : ''} onClick={() => this.setState({ stripTab: 'tacos' })}>
@@ -973,7 +1012,14 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
               onLocate={this.locateTaco}
             />
           ) : (
-            <StripLog item={cur} focusSegment={focusSegment} onEditTaco={this.editTaco} />
+            <StripLog
+              item={cur}
+              focusSegment={focusSegment}
+              onEditTaco={this.editTaco}
+              showCore={this.state.stripShowCore}
+              showFractures={this.state.stripShowFractures}
+              onToggle={(key, v) => this.setState({ [key]: v } as any)}
+            />
           )}
         </div>
       </aside>
@@ -988,7 +1034,21 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
     return (
       <div className="widget-rqd embedded">
         <div className="rqd-main-layout">
-          {this.renderSidebar(cur)}
+          {this.state.leftOpen ? (
+            <>
+              {this.renderSidebar(cur)}
+              <Splitter
+                direction="x"
+                onStart={() => { this.dragBase = this.state.leftW; }}
+                onResize={d => this.setState({ leftW: clamp(this.dragBase + d, 220, 640) })}
+                onDoubleClick={() => this.setState({ leftOpen: false })}
+              />
+            </>
+          ) : (
+            <button type="button" className="rqd-side-reopen left" onClick={() => this.setState({ leftOpen: true })} title="Mostrar panel de acciones">
+              ▶ Panel
+            </button>
+          )}
 
           {cur ? (
             <div className={`rqd-preview-pane ${cur.status === 'done' ? 'status-done' : ''}`}>
@@ -999,8 +1059,17 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
                 </div>
               )}
               {this.renderLightTable()}
+              {view === 'light_table' && !this.state.resultsCollapsed && (
+                <Splitter
+                  direction="y"
+                  onStart={() => { this.dragBase = this.state.resultsH; }}
+                  onResize={d => this.setState({ resultsH: clamp(this.dragBase - d, 90, Math.max(160, window.innerHeight * 0.75)) })}
+                  onDoubleClick={() => this.setState({ resultsCollapsed: true })}
+                />
+              )}
               {view === 'light_table' && (
                 <ResultsTable
+                  height={this.state.resultsH}
                   images={images}
                   currentImageId={cur.id}
                   collapsed={this.state.resultsCollapsed}
@@ -1030,6 +1099,14 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
             </div>
           )}
 
+          {images.length > 0 && view === 'light_table' && this.state.stripOpen && (
+            <Splitter
+              direction="x"
+              onStart={() => { this.dragBase = this.state.rightW; }}
+              onResize={d => this.setState({ rightW: clamp(this.dragBase - d, 280, Math.max(320, window.innerWidth * 0.6)) })}
+              onDoubleClick={() => this.setState({ stripOpen: false })}
+            />
+          )}
           {images.length > 0 && view === 'light_table' && this.renderStripPanel(cur)}
         </div>
 
