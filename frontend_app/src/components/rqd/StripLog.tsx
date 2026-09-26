@@ -27,13 +27,26 @@ interface Ctx {
 
 const ZOOM_MIN = 1, ZOOM_MAX = 8;
 
-/** Una fila completa de la caja; lo que queda fuera del tramo se oscurece. */
-function RowStrip({ c, piece }: { c: Ctx; piece: SegmentPiece }) {
+interface RowSeg { seg: TacoSegment; segIndex: number; piece: SegmentPiece; }
+
+/** Una fila de la caja (aparece una sola vez) con sus tramos taco→taco debajo. */
+function RowStrip({ c, row, segs, focusSegment, scrollSegment, onFocus }: {
+  c: Ctx; row: number; segs: RowSeg[];
+  focusSegment: number | null;      // tramo resaltado
+  scrollSegment: number | null;     // tramo pedido desde la tabla / lista → llevarlo a la vista
+  onFocus: (i: number) => void;
+}) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const wrap = useRef<HTMLDivElement>(null);
   const { item } = c;
-  const fila = item.result.filas[piece.row];
+  const fila = item.result.filas[row];
   const [gx0, gx1] = c.ext;
   const pct = (x: number) => ((x - gx0) / (gx1 - gx0)) * 100;
+  const focused = segs.some(r => r.segIndex === focusSegment);
+  const startsHere = segs.some(r => r.segIndex === scrollSegment && r.seg.pieces[0].row === row);
+  useEffect(() => {
+    if (startsHere) wrap.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [startsHere, scrollSegment]);
 
   useEffect(() => {
     const canvas = ref.current;
@@ -92,38 +105,26 @@ function RowStrip({ c, piece }: { c: Ctx; piece: SegmentPiece }) {
       ctx.lineWidth = lw * 1.5;
       ctx.strokeRect(d.box[0], d.box[1], d.box[2] - d.box[0], d.box[3] - d.box[1]);
     });
-
-    // Fuera del tramo: oscurecido; límites del tramo en celeste
-    ctx.fillStyle = 'rgba(15,20,25,0.62)';
-    if (piece.x0 > sx) ctx.fillRect(sx, sy, piece.x0 - sx, sh);
-    if (piece.x1 < sx + sw) ctx.fillRect(piece.x1, sy, sx + sw - piece.x1, sh);
-    ctx.strokeStyle = '#00e5ff';
-    ctx.lineWidth = lw * 1.5;
-    [piece.x0, piece.x1].forEach(x => {
-      if (x <= sx + 1 || x >= sx + sw - 1) return;
-      ctx.beginPath(); ctx.moveTo(x, sy); ctx.lineTo(x, sy + sh); ctx.stroke();
-    });
     ctx.restore();
-  }, [item, piece, fila, c.showCore, c.showFractures, gx0, gx1]);
+  }, [item, fila, c.showCore, c.showFractures, gx0, gx1]);
 
-  // Regla de profundidad sobre la fila completa
+  // Regla de profundidad
   const ticks = useMemo(() => {
     const anchors = item.result.validAnchors;
     if (!fila || !anchors) return [];
-    const d0 = c.depthAt(piece.row, gx0), d1 = c.depthAt(piece.row, gx1);
+    const d0 = c.depthAt(row, gx0), d1 = c.depthAt(row, gx1);
     const span = d1 - d0;
     const step = span / c.zoom > 0.6 ? 0.2 : span / c.zoom > 0.25 ? 0.1 : 0.05;
     const out: { x: number; d: number }[] = [];
     for (let d = Math.ceil(d0 / step - 1e-6) * step; d <= d1 + 1e-6; d += step) {
       const p = depthToP(anchors, d);
-      const row = Math.floor(p / item.origW);
-      if (row !== piece.row) continue;
-      out.push({ x: p - row * item.origW, d });
+      const r = Math.floor(p / item.origW);
+      if (r !== row) continue;
+      out.push({ x: p - r * item.origW, d });
     }
     return out;
-  }, [item, fila, piece.row, c.zoom, gx0, gx1, c.depthAt]);
+  }, [item, fila, row, c.zoom, gx0, gx1, c.depthAt]);
 
-  // Tacos de esta fila → pines numerados bajo la foto
   const pins = item.cajas
     .map((d: any, idx: number) => ({ d, idx }))
     .filter(({ d }: any) => {
@@ -132,34 +133,28 @@ function RowStrip({ c, piece }: { c: Ctx; piece: SegmentPiece }) {
       return cy >= fila.y_min - 10 && cy <= fila.y_max + 10;
     });
 
-  const discTxt = Object.entries(piece.discounts).map(([k, v]) => `${k} −${v.toFixed(2)} m`).join(' · ');
+  const label = (idx: number | undefined, fallback: string) => (idx === undefined ? fallback : `T${c.nums.get(idx) ?? '?'}`);
 
   return (
-    <div className="strip-row">
+    <div ref={wrap} className={`strip-row ${focused ? 'focused' : ''}`}>
       <div className="strip-ticks">
-        {ticks.map(t => (
-          <span key={t.d.toFixed(3)} style={{ left: `${pct(t.x)}%` }}>{t.d.toFixed(2)}</span>
-        ))}
+        {ticks.map(t => <span key={t.d.toFixed(3)} style={{ left: `${pct(t.x)}%` }}>{t.d.toFixed(2)}</span>)}
       </div>
       <div className="strip-photo">
         <canvas ref={ref} className="strip-canvas" />
+        {segs.slice(1).map(r => (
+          <div key={r.segIndex} className="strip-cut" style={{ left: `${pct(r.piece.x0)}%` }} />
+        ))}
       </div>
       {pins.length > 0 && (
         <div className="strip-pins">
           {pins.map(({ d, idx }: any) => {
             const x = (d.box[0] + d.box[2]) / 2;
             const info = item.result.tacoInfo?.[idx];
-            const inSeg = d.box[2] >= piece.x0 - 5 && d.box[0] <= piece.x1 + 5;   // incluye los tacos que abren/cierran el tramo
             const cls = !info || !info.usable ? 'bad' : info.source === 'estimado' ? 'est' : 'ok';
             return (
-              <button
-                key={idx}
-                type="button"
-                className={`strip-pin ${cls} ${inSeg ? '' : 'dim'}`}
-                style={{ left: `${pct(x)}%` }}
-                onClick={() => c.onEditTaco(idx)}
-                title="Corregir este taco"
-              >
+              <button key={idx} type="button" className={`strip-pin ${cls}`} style={{ left: `${pct(x)}%` }}
+                onClick={() => c.onEditTaco(idx)} title="Corregir este taco">
                 <span className="pin-num">{c.nums.get(idx) ?? '?'}</span>
                 {info?.source === 'estimado' ? '~' : ''}{d.ocrValue ?? '?'} m ✎
               </button>
@@ -167,41 +162,26 @@ function RowStrip({ c, piece }: { c: Ctx; piece: SegmentPiece }) {
           })}
         </div>
       )}
-      {discTxt && <div className="strip-piece-meta strip-disc">descuenta del RQD: {discTxt}</div>}
-    </div>
-  );
-}
-
-function SegmentCard({ c, seg, index, focused }: { c: Ctx; seg: TacoSegment; index: number; focused: boolean }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (focused) ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, [focused]);
-
-  const cls = rqdClass(seg.rqdPct);
-  const label = (idx: number | undefined, fallback: string) => (idx === undefined ? fallback : `T${c.nums.get(idx) ?? '?'}`);
-  const discTxt = Object.entries(seg.discounts).map(([k, v]) => `${k} −${v.toFixed(2)} m`).join(' · ');
-
-  return (
-    <div ref={ref} className={`strip-segment ${focused ? 'focused' : ''}`}>
-      <div className="strip-seg-head strip-sticky">
-        <span className="strip-seg-title">
-          {label(seg.startTacoIdx, 'From')} → {label(seg.endTacoIdx, 'To')} · {seg.from.toFixed(2)} – {seg.to.toFixed(2)} m
-        </span>
-        <span className="strip-seg-kpi">
-          <b style={{ color: cls.color }}>RQD {seg.rqdPct.toFixed(1)}%</b> · Rec {seg.recPct.toFixed(1)}%
-        </span>
-      </div>
-      <div className="strip-bar">
-        <div className="strip-bar-rec" style={{ width: `${Math.min(100, seg.recPct)}%` }} />
-        <div className="strip-bar-rqd" style={{ width: `${Math.min(100, (seg.rqdM / seg.lengthM) * 100)}%`, background: cls.color }} />
-      </div>
-      {seg.pieces.map((p, k) => <RowStrip key={`${index}-${k}`} c={c} piece={p} />)}
-      <div className="strip-seg-foot strip-sticky">
-        <span>
-          {seg.lengthM.toFixed(2)} m · Rec {seg.recM.toFixed(2)} m · RQD {seg.rqdM.toFixed(2)} m
-          {discTxt && <span className="strip-disc"> · descuenta {discTxt}</span>}
-        </span>
+      <div className="strip-bands">
+        {segs.map(r => {
+          const cls = rqdClass(r.seg.rqdPct);
+          const disc = Object.entries(r.seg.discounts).map(([k, v]) => `${k} −${v.toFixed(2)} m`).join(', ');
+          return (
+            <button
+              key={r.segIndex}
+              type="button"
+              className={`strip-band ${focusSegment === r.segIndex ? 'active' : ''}`}
+              style={{ left: `${pct(r.piece.x0)}%`, width: `${pct(r.piece.x1) - pct(r.piece.x0)}%`, borderColor: cls.color, background: `${cls.color}22` }}
+              onClick={() => onFocus(r.segIndex)}
+              title={`${label(r.seg.startTacoIdx, 'From')} → ${label(r.seg.endTacoIdx, 'To')} · ${r.seg.from.toFixed(2)}–${r.seg.to.toFixed(2)} m · ` +
+                `Rec ${r.seg.recM.toFixed(2)} m (${r.seg.recPct.toFixed(1)}%) · RQD ${r.seg.rqdM.toFixed(2)} m (${r.seg.rqdPct.toFixed(1)}%)` +
+                (disc ? ` · descuenta ${disc}` : '')}
+            >
+              <b style={{ color: cls.color }}>RQD {r.seg.rqdPct.toFixed(0)}%</b>
+              <span> · Rec {r.seg.recPct.toFixed(0)}% · {label(r.seg.startTacoIdx, 'From')}→{label(r.seg.endTacoIdx, 'To')}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -210,6 +190,8 @@ function SegmentCard({ c, seg, index, focused }: { c: Ctx; seg: TacoSegment; ind
 export default function StripLog({ item, focusSegment, onEditTaco, showCore, showFractures, onToggle }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
+  const [localFocus, setLocalFocus] = useState<number | null>(focusSegment);
+  useEffect(() => { setLocalFocus(focusSegment); }, [focusSegment]);
   const [viewW, setViewW] = useState(400);
   const anchor = useRef<{ mx: number; my: number; ratio: number } | null>(null);
   const zoomRef = useRef(zoom);
@@ -239,9 +221,9 @@ export default function StripLog({ item, focusSegment, onEditTaco, showCore, sho
     ro.observe(el);
     setViewW(el.clientWidth - 20);
 
-    // Rueda sobre una foto = zoom centrado en el cursor; en el resto = scroll normal
+    // Igual que la mesa de luz: rueda = zoom centrado en el cursor, arrastrar = mover
     const onWheel = (e: WheelEvent) => {
-      if (!(e.target as HTMLElement).closest?.('.strip-photo')) return;
+      if ((e.target as HTMLElement).closest?.('.strip-top')) return;
       e.preventDefault();
       const z1 = zoomRef.current;
       const z2 = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z1 * Math.pow(1.0015, -e.deltaY)));
@@ -253,7 +235,8 @@ export default function StripLog({ item, focusSegment, onEditTaco, showCore, sho
     // Arrastrar una foto = desplazarse
     let drag: { x: number; y: number; l: number; t: number } | null = null;
     const onDown = (e: PointerEvent) => {
-      if (e.button !== 0 || !(e.target as HTMLElement).closest?.('.strip-photo')) return;
+      const t = e.target as HTMLElement;
+      if (e.button !== 0 || t.closest?.('button, input, label, .strip-top')) return;
       drag = { x: e.clientX, y: e.clientY, l: el.scrollLeft, t: el.scrollTop };
       el.classList.add('panning');
     };
@@ -299,6 +282,8 @@ export default function StripLog({ item, focusSegment, onEditTaco, showCore, sho
   }
   const { tacoSegments, rejectedTacos } = item.result;
   const c: Ctx = { item, nums, ext, depthAt, showCore, showFractures, zoom, onEditTaco };
+  const byRow: RowSeg[][] = item.result.filas.map(() => []);
+  tacoSegments.forEach((seg: TacoSegment, segIndex: number) => seg.pieces.forEach(piece => byRow[piece.row]?.push({ seg, segIndex, piece })));
 
   return (
     <div ref={rootRef} className="striplog" style={{ width: `${zoom * 100}%`, ['--vw' as any]: `${viewW}px` }}>
@@ -311,7 +296,7 @@ export default function StripLog({ item, focusSegment, onEditTaco, showCore, sho
           <label><input type="checkbox" checked={showFractures} onChange={e => onToggle('stripShowFractures', e.target.checked)} /> Fracturas</label>
           <span className="strip-zoom">
             <button type="button" onClick={() => setZoomCentered(zoom / 1.4)} disabled={zoom <= ZOOM_MIN}>−</button>
-            <span title="Rueda del ratón sobre una foto para acercar · arrastra para moverte">{Math.round(zoom * 100)}%</span>
+            <span title="Rueda del ratón para acercar · arrastra para moverte">{Math.round(zoom * 100)}%</span>
             <button type="button" onClick={() => setZoomCentered(zoom * 1.4)} disabled={zoom >= ZOOM_MAX}>+</button>
             {zoom > 1 && <button type="button" onClick={() => setZoomCentered(1)} title="Restablecer">⟲</button>}
           </span>
@@ -322,9 +307,11 @@ export default function StripLog({ item, focusSegment, onEditTaco, showCore, sho
           </button>
         )}
       </div>
-      {tacoSegments.map((seg: TacoSegment, i: number) => (
-        <SegmentCard key={i} c={c} seg={seg} index={i} focused={focusSegment === i} />
-      ))}
+      <div className="strip-rows">
+        {byRow.map((segs, row) => (
+          <RowStrip key={row} c={c} row={row} segs={segs} focusSegment={localFocus} scrollSegment={focusSegment} onFocus={setLocalFocus} />
+        ))}
+      </div>
     </div>
   );
 }

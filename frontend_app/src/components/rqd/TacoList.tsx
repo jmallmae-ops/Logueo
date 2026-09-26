@@ -32,8 +32,8 @@ function TacoThumb({ item, det }: { item: any; det: any }) {
     const ctx = c.getContext('2d')!;
     ctx.save();
     if (vertical) {
-      ctx.translate(0, c.height);
-      ctx.rotate(-Math.PI / 2);
+      ctx.translate(c.width, 0);
+      ctx.rotate(Math.PI / 2);
       ctx.drawImage(item.origImg, x0, y0, w, h, 0, 0, c.height, c.width);
     } else {
       ctx.drawImage(item.origImg, x0, y0, w, h, 0, 0, c.width, c.height);

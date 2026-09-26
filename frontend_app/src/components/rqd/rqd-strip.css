@@ -89,7 +89,6 @@ body.rqd-resizing iframe, body.rqd-resizing canvas { pointer-events: none; }
 .strip-sticky { position: sticky; left: 0; width: var(--vw, 100%); box-sizing: border-box; }
 .strip-top { display: flex; flex-direction: column; gap: 6px; z-index: 3; }
 .strip-segment { overflow: visible; }
-.strip-row { padding: 2px 8px 4px; }
 .strip-ticks { position: relative; height: 15px; border-bottom: 1px solid #c9ced3; }
 .strip-ticks span {
   position: absolute; bottom: 1px; transform: translateX(-50%); font-size: 10px; color: var(--text-muted);
@@ -98,7 +97,21 @@ body.rqd-resizing iframe, body.rqd-resizing canvas { pointer-events: none; }
 .strip-ticks span::after {
   content: ''; position: absolute; left: 50%; bottom: -5px; width: 1px; height: 4px; background: #8a9299;
 }
-.strip-photo { cursor: zoom-in; line-height: 0; }
+.strip-rows { display: flex; flex-direction: column; gap: 4px; }
+.strip-row { border-radius: 6px; padding: 2px 8px 4px; }
+.strip-row.focused { background: rgba(0, 79, 113, .06); }
+.striplog { cursor: grab; }
+.strip-top { cursor: default; background: var(--bg-surface); top: 0; padding-bottom: 6px; }
+.strip-photo { position: relative; line-height: 0; }
+.strip-cut { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #00e5ff; box-shadow: 0 0 0 1px rgba(0,0,0,.35); }
+.strip-bands { position: relative; height: 20px; margin-top: 2px; }
+.strip-band {
+  position: absolute; top: 0; height: 18px; box-sizing: border-box; border: 1px solid; border-top-width: 3px;
+  border-radius: 0 0 4px 4px; padding: 0 5px; font: 10px ui-monospace, Menlo, Consolas, monospace;
+  color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left;
+  cursor: pointer; line-height: 13px;
+}
+.strip-band.active { box-shadow: 0 0 0 2px var(--primary); z-index: 1; }
 .rqd-strip-body.panning, .rqd-strip-body.panning .strip-photo { cursor: grabbing; }
 .strip-canvas { display: block; width: 100%; height: auto; background: #222; }
 .strip-pins { position: relative; height: 30px; }

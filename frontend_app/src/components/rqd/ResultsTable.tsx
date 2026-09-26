@@ -11,13 +11,13 @@ interface Props {
 }
 
 // Mismo orden de columnas que el reporte de referencia
-export const RESULT_HEADERS = ['Collar', 'Desde (m)', 'Hasta (m)', 'Ancho (m)', 'Recuperacion (m)', 'Recuperacion (%)', 'RQD (%)', 'RQD (m)', 'fotografia'];
-const RQD_PCT_COL = 6;
+export const RESULT_HEADERS = ['Collar', 'Desde (m)', 'Hasta (m)', 'Ancho (m)', 'Recuperacion (m)', 'Recuperacion (%)', 'RQD (m)', 'RQD (%)', 'fotografia'];
+const RQD_PCT_COL = 7;
 
 export function resultRow(r: HoleSegment): string[] {
   return [
     r.collar, r.from.toFixed(2), r.to.toFixed(2), (r.to - r.from).toFixed(2),
-    r.recM.toFixed(2), r.recPct.toFixed(1), r.rqdPct.toFixed(1), r.rqdM.toFixed(2),
+    r.recM.toFixed(2), r.recPct.toFixed(1), r.rqdM.toFixed(2), r.rqdPct.toFixed(1),
     Array.from(new Set(r.parts.map(p => p.imageName))).join(' | '),
   ];
 }
