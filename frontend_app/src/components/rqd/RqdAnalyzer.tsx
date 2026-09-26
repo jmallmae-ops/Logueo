@@ -6,15 +6,14 @@
 //   - Corregir un taco o From/To recalcula al instante (sin botón).
 //   - La vista (mesa de luz / galería / mapa) la controla el Workspace.
 import React from 'react';
-import * as XLSX from 'xlsx';
 import ImagoLoginModal from '../common/ImagoLoginModal';
 import CameraCropModal from '../common/CameraCropModal';
 import StripLog from './StripLog';
 import TacoList from './TacoList';
 import Splitter from './Splitter';
-import ResultsTable, { RESULT_HEADERS, resultRow } from './ResultsTable';
+import ResultsTable from './ResultsTable';
 import { ImageItem } from '../../types';
-import { computeRqd, mergeHoleSegments, sortImagesForHole, parseDepth } from '../../lib/rqdMath';
+import { computeRqd, sortImagesForHole, parseDepth } from '../../lib/rqdMath';
 import { drawAnnotatedBox } from '../../lib/rqdDraw';
 import {
   loadONNXRuntime, initTesseractWorker, recognizeCropDetailed, drawImageToCanvas, preprocess,
@@ -686,28 +685,6 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
   drawCanvasForCurrentItem = () => this.drawAllCanvases();
 
   // ------------------------------------------------------------------
-  // Exportación Excel
-  // ------------------------------------------------------------------
-  exportGlobalCsv = () => {
-    const done = sortImagesForHole(this.state.images.filter(i => i.status === 'done' && i.csvData?.length > 0));
-    if (done.length === 0) { alert('No hay imágenes procesadas para exportar.'); return; }
-    const head = ['Collar', 'Desde (m)', 'Hasta (m)', 'RQD (%)', 'RQD (m)', 'Recuperacion (%)', 'Recuperacion (m)', 'Imagen'];
-    const global = [head, ...done.map(i => i.csvData[i.csvData.length - 1])];
-    const fr = [['Sondaje', 'Caja (Imagen)', 'Clase', 'Confianza', 'Desde (m)', 'Hasta (m)']];
-    done.forEach(i => i.result?.fracturas_report?.forEach((r: string[]) => fr.push(r)));
-    const tacos = [RESULT_HEADERS, ...mergeHoleSegments(done).map(resultRow)];
-    const cols = [15, 12, 12, 12, 12, 15, 15, 25].map(wch => ({ wch }));
-    const wb = XLSX.utils.book_new();
-    const s1 = XLSX.utils.aoa_to_sheet(global); s1['!cols'] = cols;
-    const s2 = XLSX.utils.aoa_to_sheet(tacos); s2['!cols'] = cols;
-    const s3 = XLSX.utils.aoa_to_sheet(fr); s3['!cols'] = [15, 25, 15, 12, 12, 12].map(wch => ({ wch }));
-    XLSX.utils.book_append_sheet(wb, s1, 'Reporte Global RQD');
-    XLSX.utils.book_append_sheet(wb, s2, 'Taco a Taco');
-    XLSX.utils.book_append_sheet(wb, s3, 'Fracturas');
-    XLSX.writeFile(wb, 'Reporte_Analisis_RQD.xlsx');
-  };
-
-  // ------------------------------------------------------------------
   // Render
   // ------------------------------------------------------------------
   renderLayerToggle(key: 'showCores' | 'showFractures' | 'showTacos' | 'showRuler' | 'showCsvLog', label: string) {
@@ -760,8 +737,7 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
             </div>
           </details>
           <button className="btn btn-primary w-100 mb-2" onClick={() => this.analyzeAllImages()} disabled={images.length === 0}>2. ⚡ Analizar Todas</button>
-          <button className="btn btn-default w-100 mb-2" onClick={this.exportGlobalCsv} disabled={!images.some(i => i.status === 'done')}>3. 📊 Exportar Excel</button>
-          <button className="btn btn-outline-danger w-100" onClick={this.resetWidget} disabled={images.length === 0}>4. 🗑 Limpiar Todo</button>
+          <button className="btn btn-outline-danger w-100" onClick={this.resetWidget} disabled={images.length === 0}>3. 🗑 Limpiar Todo</button>
         </div>
 
         {images.length > 0 && (

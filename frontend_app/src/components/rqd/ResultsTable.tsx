@@ -11,12 +11,13 @@ interface Props {
 }
 
 // Mismo orden de columnas que el reporte de referencia
-export const RESULT_HEADERS = ['Collar', 'Desde (m)', 'Hasta (m)', 'Recuperacion (%)', 'Recuperacion (m)', 'RQD (%)', 'RQD (m)', 'fotografia'];
+export const RESULT_HEADERS = ['Collar', 'Desde (m)', 'Hasta (m)', 'Ancho (m)', 'Recuperacion (m)', 'Recuperacion (%)', 'RQD (%)', 'RQD (m)', 'fotografia'];
+const RQD_PCT_COL = 6;
 
 export function resultRow(r: HoleSegment): string[] {
   return [
-    r.collar, r.from.toFixed(2), r.to.toFixed(2),
-    r.recPct.toFixed(1), r.recM.toFixed(2), r.rqdPct.toFixed(1), r.rqdM.toFixed(2),
+    r.collar, r.from.toFixed(2), r.to.toFixed(2), (r.to - r.from).toFixed(2),
+    r.recM.toFixed(2), r.recPct.toFixed(1), r.rqdPct.toFixed(1), r.rqdM.toFixed(2),
     Array.from(new Set(r.parts.map(p => p.imageName))).join(' | '),
   ];
 }
@@ -71,7 +72,7 @@ export default function ResultsTable({ images, currentImageId, collapsed, height
                       onSelect(target.imageId, target.segIndex);
                     }}>
                       {cells.map((c, j) => (
-                        <td key={j} style={j === 5 ? { color: rqdClass(r.rqdPct).color, fontWeight: 700 } : undefined}>{c}</td>
+                        <td key={j} style={j === RQD_PCT_COL ? { color: rqdClass(r.rqdPct).color, fontWeight: 700 } : undefined}>{c}</td>
                       ))}
                     </tr>
                   );

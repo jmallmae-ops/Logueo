@@ -10,7 +10,7 @@
 //                    (dentro de From–To, en orden y coherente con el tamaño)
 //       3) estimado→ proporcional a la longitud de canal entre tacos conocidos
 //     Se resuelve en cada cálculo: cambiar un taco re-estima los demás.
-//   - Panizo / Zona Fracturada / Zona Plástica descuentan longitud.
+//   - Panizo / Zona Fracturada / Zona Plástica descuentan solo del RQD.
 //   - Fracturas cortan los intervalos de núcleo; solo trozos >= 0.10 m suman RQD.
 
 export type Box = [number, number, number, number];
@@ -495,33 +495,58 @@ export function computeRqd(input: ComputeInput, initial = false): ComputeOutput 
     });
   });
 
+  // Medición de un tramo [xa, xb] de una fila:
+  //   Recovery = testigo detectado (máscara verde) dentro del tramo.
+  //   RQD      = trozos >= 0.10 m tras cortar fracturas y quitar zonas
+  //              blandas (Panizo / Zona Fracturada / Zona Plástica).
+  //   Las zonas blandas solo descuentan del RQD, nunca de la Recovery, y
+  //   cuentan una sola vez aunque sus cajas se solapen.
+  const measure = (L: number, f: Fila, xa: number, xb: number) => {
+    let core: [number, number][] = [];
+    f.finalIntervals.forEach(iv => {
+      const a = Math.max(xa, iv[0]), b = Math.min(xb, iv[1]);
+      if (a < b) core.push([a, b]);
+    });
+    const len = (ivs: [number, number][]) => ivs.reduce((acc, iv) => acc + (depthAt(L, iv[1]) - depthAt(L, iv[0])), 0);
+    const coreM = len(core);
+    const discounts: Record<string, number> = {};
+    let pieces = core;
+    const soft: Record<string, [number, number][]> = {};
+    fracturesInRow(fracturas, f).forEach(fr => {
+      const a = Math.max(xa, fr.box[0]), b = Math.min(xb, fr.box[2]);
+      if (a >= b) return;
+      if (DISCOUNT_CLASSES.has(fr.classStr)) (soft[fr.classStr] = soft[fr.classStr] || []).push([a, b]);
+      pieces = subtractInterval(pieces, a, b);
+    });
+    // Descuento por clase = testigo cubierto por esa clase (unión, sin duplicar)
+    Object.entries(soft).forEach(([cls, ivs]) => {
+      let rest = core;
+      ivs.forEach(([a, b]) => { rest = subtractInterval(rest, a, b); });
+      const m = coreM - len(rest);
+      if (m > 0.0005) discounts[cls] = m;
+    });
+    const sound = pieces.reduce((acc, iv) => {
+      const m = depthAt(L, iv[1]) - depthAt(L, iv[0]);
+      return m >= MIN_PIECE_M ? acc + m : acc;
+    }, 0);
+    return { coreM, sound, discounts };
+  };
+
   // ---- Totales por fila ----
   let recTotal = 0, rqdTotal = 0;
   const fracturasReport: string[][] = [];
   filas.forEach((f, L) => {
-    const recRaw = f.finalIntervals.reduce((s, iv) => s + (depthAt(L, iv[1]) - depthAt(L, iv[0])), 0);
-    const inRow = fracturesInRow(fracturas, f);
-    inRow.forEach(fr => {
+    fracturesInRow(fracturas, f).forEach(fr => {
       fracturasReport.push([
         input.collar, input.name, fr.classStr, fr.prob.toFixed(2),
         depthAt(L, fr.box[0]).toFixed(2), depthAt(L, fr.box[2]).toFixed(2),
       ]);
     });
-    let discount = 0;
-    let pieces = [...f.finalIntervals] as [number, number][];
-    inRow.forEach(fr => {
-      if (DISCOUNT_CLASSES.has(fr.classStr)) discount += depthAt(L, fr.box[2]) - depthAt(L, fr.box[0]);
-      else pieces = subtractInterval(pieces, fr.box[0], fr.box[2]);
-    });
-    const sound = pieces.reduce((s, iv) => {
-      const len = depthAt(L, iv[1]) - depthAt(L, iv[0]);
-      return len >= MIN_PIECE_M ? s + len : s;
-    }, 0);
+    const { coreM, sound } = measure(L, f, 0, origW);
     const rowNominal = depthAt(L, origW) - depthAt(L, 0);
-    let rec = recRaw - discount;
+    let rec = coreM;
     if (rec > rowNominal) { rec = rowNominal; warnings.push(`Recovery topada al 100% en fila ${f.num}`); }
-    let rqd = Math.max(0, sound - discount);
-    if (rqd > rec) { rqd = rec; warnings.push(`RQD topado a Recovery en fila ${f.num}`); }
+    const rqd = Math.min(sound, rec);
     recTotal += rec;
     rqdTotal += rqd;
     f.suma = rec;
@@ -546,48 +571,17 @@ export function computeRqd(input: ComputeInput, initial = false): ComputeOutput 
       const ie = Math.max(0, A.p - G);
       const re = Math.min(origW, B.p - G);
       if (ie >= re) return;
-
-      const core = f.finalIntervals.reduce((acc, iv) => {
-        const a = Math.max(ie, iv[0]), b = Math.min(re, iv[1]);
-        return a < b ? acc + (depthAt(I, b) - depthAt(I, a)) : acc;
-      }, 0);
-
-      let disc = 0;
-      const pieceDisc: Record<string, number> = {};
-      const cuts: [number, number][] = [];
-      fracturesInRow(fracturas, f).forEach(fr => {
-        const a = Math.max(ie, fr.box[0]), b = Math.min(re, fr.box[2]);
-        if (a >= b) return;
-        if (DISCOUNT_CLASSES.has(fr.classStr)) {
-          const m = depthAt(I, b) - depthAt(I, a);
-          disc += m;
-          pieceDisc[fr.classStr] = (pieceDisc[fr.classStr] || 0) + m;
-        } else cuts.push([a, b]);
-      });
-
-      let clipped: [number, number][] = [];
-      f.finalIntervals.forEach(iv => {
-        const a = Math.max(ie, iv[0]), b = Math.min(re, iv[1]);
-        if (a < b) clipped.push([a, b]);
-      });
-      cuts.forEach(c => { clipped = subtractInterval(clipped, c[0], c[1]); });
-      const sound = clipped.reduce((acc, iv) => {
-        const m = depthAt(I, iv[1]) - depthAt(I, iv[0]);
-        return m >= MIN_PIECE_M ? acc + m : acc;
-      }, 0);
-
+      const { coreM, sound, discounts } = measure(I, f, ie, re);
       const pieceNominal = depthAt(I, re) - depthAt(I, ie);
-      let rec = core - disc;
-      if (rec > pieceNominal) rec = pieceNominal;
-      let rqd = Math.max(0, sound - disc);
-      if (rqd > rec) rqd = rec;
+      const rec = Math.min(coreM, pieceNominal);
+      const rqd = Math.min(sound, rec);
       segRec += rec;
       segRqd += rqd;
-      Object.entries(pieceDisc).forEach(([k, v]) => { segDisc[k] = (segDisc[k] || 0) + v; });
+      Object.entries(discounts).forEach(([k, v]) => { segDisc[k] = (segDisc[k] || 0) + v; });
       segPieces.push({
         row: I, x0: ie, x1: re,
         depth0: depthAt(I, ie), depth1: depthAt(I, re),
-        recM: rec, rqdM: rqd, discounts: pieceDisc,
+        recM: rec, rqdM: rqd, discounts,
       });
     });
 

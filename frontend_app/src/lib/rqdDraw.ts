@@ -271,7 +271,8 @@ export function drawAnnotatedBox(canvas: HTMLCanvasElement, item: any, layers: D
 
   // ---- Número de cada taco (encima de todo) ----
   if (layers.showTacos) {
-    const R = Math.max(14, Math.round(fontPx * 1.1));
+    const R = Math.max(11, Math.round(fontPx * 0.75));
+    const valFont = Math.max(12, Math.round(fontPx * 0.7));
     item.cajas.forEach((d: Detection, idx: number) => {
       if (d.classId !== 1) return;
       const color = CORE_COLORS[1];
@@ -293,12 +294,13 @@ export function drawAnnotatedBox(canvas: HTMLCanvasElement, item: any, layers: D
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(String(n), cx, cy + 1);
-        ctx.font = `bold ${fontPx}px Arial`;
         ctx.lineWidth = lw;
       }
       const v = d.ocrValue;
       if (v !== undefined && v !== null && v !== '') {
-        outlinedText(`${info?.source === 'estimado' ? '~' : ''}${v} m`, cx, cy + (n ? R + 4 : 5), color);
+        ctx.font = `bold ${valFont}px Arial`;
+        outlinedText(`${info?.source === 'estimado' ? '~' : ''}${v} m`, cx, cy + (n ? R + 3 : 5), color);
+        ctx.font = `bold ${fontPx}px Arial`;
       }
     });
   }
