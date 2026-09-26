@@ -1,6 +1,6 @@
 // Dibujo de la foto anotada de cada caja (mesa de luz).
 // Portado del RQD Analyzer compilado.
-import { Detection, FRACTURE_CLASSES, depthToP, subtractInterval } from './rqdMath';
+import { Detection, FRACTURE_CLASSES, depthToP, maskTarget, subtractInterval } from './rqdMath';
 
 export interface DrawLayers {
   showCores: boolean;
@@ -22,7 +22,17 @@ export interface CsvLogState {
 export const CORE_COLORS = ['#00FF00', '#00FFFF'];            // Núcleo, Taco
 export const FRACTURE_COLORS = ['#0000FF', '#FF00FF', '#FFA07A', '#FFFF00'];
 
-const tacoLabel = (v: unknown) => (v !== undefined && v !== null && v !== '' ? `Taco: ${v}m` : 'Taco: ?');
+const tacoLabel = (n: number | undefined, v: unknown) => {
+  const tag = n ? `T${n}` : 'Taco';
+  return v !== undefined && v !== null && v !== '' ? `${tag}: ${v}m` : `${tag}: ?`;
+};
+
+/** Número (1-based) de cada taco según su posición a lo largo del testigo. */
+export function tacoNumbers(item: any): Map<number, number> {
+  const m = new Map<number, number>();
+  (item.result?.tacoOrder || []).forEach((idx: number, i: number) => m.set(idx, i + 1));
+  return m;
+}
 
 function tacosInRow(cajas: Detection[], f: { y_min: number; y_max: number }) {
   return cajas.filter(b => {
@@ -36,6 +46,36 @@ function rowExtent(f: any, origW: number): [number, number] {
   let x0 = origW, x1 = 0;
   f.items.forEach((it: any) => { if (it[4][0] < x0) x0 = it[4][0]; if (it[4][2] > x1) x1 = it[4][2]; });
   return [x0, x1];
+}
+
+/** Pinta la máscara verde de un núcleo (recortada a su caja) en coordenadas de la foto. */
+export function paintCoreMask(octx: CanvasRenderingContext2D, item: any, d: Detection, color = CORE_COLORS[0], alpha = 45) {
+  if (!(d.mask && d.rawBox)) return;
+  const side = Math.sqrt(d.mask.length);
+  const target = maskTarget(d.mask.length);
+  const mc = document.createElement('canvas');
+  mc.width = side;
+  mc.height = side;
+  const mctx = mc.getContext('2d')!;
+  const data = mctx.createImageData(side, side);
+  const r = parseInt(color.slice(1, 3), 16), g = parseInt(color.slice(3, 5), 16), b = parseInt(color.slice(5, 7), 16);
+  for (let k = 0; k < d.mask.length; k++) {
+    const v = d.mask[k];
+    if (v > 0.1) {
+      data.data[k * 4] = r; data.data[k * 4 + 1] = g; data.data[k * 4 + 2] = b;
+      data.data[k * 4 + 3] = Math.floor(v * alpha);
+    }
+  }
+  mctx.putImageData(data, 0, 0);
+  octx.save();
+  octx.beginPath();
+  octx.rect(d.box[0], d.box[1], d.box[2] - d.box[0], d.box[3] - d.box[1]);
+  octx.clip();
+  octx.shadowBlur = 1;
+  octx.shadowColor = color;
+  octx.imageSmoothingEnabled = true;
+  octx.drawImage(mc, -item.padX / item.scale, -item.padY / item.scale, target / item.scale, target / item.scale);
+  octx.restore();
 }
 
 export function drawAnnotatedBox(canvas: HTMLCanvasElement, item: any, layers: DrawLayers, csv: CsvLogState) {
@@ -84,32 +124,7 @@ export function drawAnnotatedBox(canvas: HTMLCanvasElement, item: any, layers: D
   if (layers.showCores) {
     item.cajas.filter((d: Detection) => d.classId === 0).forEach((d: Detection) => {
       const color = CORE_COLORS[d.classId];
-      if (!(d.mask && d.rawBox)) return;
-      const side = Math.sqrt(d.mask.length);
-      const target = d.mask.length === 65536 ? 1024 : d.mask.length === 262144 ? 512 : 640;
-      const mc = document.createElement('canvas');
-      mc.width = side;
-      mc.height = side;
-      const mctx = mc.getContext('2d')!;
-      const data = mctx.createImageData(side, side);
-      const r = parseInt(color.slice(1, 3), 16), g = parseInt(color.slice(3, 5), 16), b = parseInt(color.slice(5, 7), 16);
-      for (let k = 0; k < d.mask.length; k++) {
-        const v = d.mask[k];
-        if (v > 0.1) {
-          data.data[k * 4] = r; data.data[k * 4 + 1] = g; data.data[k * 4 + 2] = b;
-          data.data[k * 4 + 3] = Math.floor(v * 45);
-        }
-      }
-      mctx.putImageData(data, 0, 0);
-      octx.save();
-      octx.beginPath();
-      octx.rect(d.box[0], d.box[1], d.box[2] - d.box[0], d.box[3] - d.box[1]);
-      octx.clip();
-      octx.shadowBlur = 1;
-      octx.shadowColor = color;
-      octx.imageSmoothingEnabled = true;
-      octx.drawImage(mc, -item.padX / item.scale, -item.padY / item.scale, target / item.scale, target / item.scale);
-      octx.restore();
+      paintCoreMask(octx, item, d, color);
     });
   }
 
@@ -121,6 +136,7 @@ export function drawAnnotatedBox(canvas: HTMLCanvasElement, item: any, layers: D
     });
   }
 
+  const nums = tacoNumbers(item);
   const tacos = item.cajas.filter((d: Detection) => d.classId === 1);
   if (tacos.length > 0 && layers.showTacos) {
     octx.save();
@@ -131,12 +147,13 @@ export function drawAnnotatedBox(canvas: HTMLCanvasElement, item: any, layers: D
   ctx.drawImage(overlay, 0, 0);
 
   if (layers.showTacos) {
-    tacos.forEach((d: Detection) => {
+    item.cajas.forEach((d: Detection, idx: number) => {
+      if (d.classId !== 1) return;
       const color = CORE_COLORS[d.classId];
       ctx.strokeStyle = color;
       ctx.lineWidth = lw;
       ctx.strokeRect(d.box[0], d.box[1], d.box[2] - d.box[0], d.box[3] - d.box[1]);
-      outlinedText(tacoLabel(d.ocrValue), (d.box[0] + d.box[2]) / 2, d.box[1] + 5, color);
+      outlinedText(tacoLabel(nums.get(idx), d.ocrValue), (d.box[0] + d.box[2]) / 2, d.box[1] + 5, color);
     });
   }
   if (layers.showCores) {
@@ -269,22 +286,4 @@ export function drawAnnotatedBox(canvas: HTMLCanvasElement, item: any, layers: D
     });
   }
 
-  // ---- Recuperación por fila ----
-  if (result?.filas) {
-    const big = Math.floor(fontPx * 1.5);
-    ctx.font = `bold ${big}px Arial`;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    result.filas.forEach((f: any) => {
-      if (f.items.length === 0 || f.suma === undefined) return;
-      const b = f.items[0][4];
-      const cy = (b[1] + b[3]) / 2;
-      const txt = `Fila ${f.num}: ${f.suma.toFixed(2)} m`;
-      ctx.lineWidth = Math.max(4, Math.floor(big / 8));
-      ctx.strokeStyle = 'white';
-      ctx.strokeText(txt, 50, cy);
-      ctx.fillStyle = '#00FF00';
-      ctx.fillText(txt, 50, cy);
-    });
-  }
 }

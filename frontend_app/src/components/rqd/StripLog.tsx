@@ -1,21 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { DISCOUNT_CLASSES, FRACTURE_CLASSES, SegmentPiece, TacoSegment, rqdClass } from '../../lib/rqdMath';
-import { FRACTURE_COLORS } from '../../lib/rqdDraw';
+import React, { useEffect, useRef } from 'react';
+import { DISCOUNT_CLASSES, FRACTURE_CLASSES, SegmentPiece, TacoSegment, coreIntervals, rqdClass } from '../../lib/rqdMath';
+import { FRACTURE_COLORS, paintCoreMask, tacoNumbers } from '../../lib/rqdDraw';
 
 interface Props {
   item: any;                                   // ImageItem ya analizado
   focusSegment: number | null;                 // tramo a resaltar/scroll (desde la tabla)
-  onTacoChange: (cajaIdx: number, value: string) => void;
+  onEditTaco: (cajaIdx: number) => void;       // abre la lista de tacos en ese taco
 }
 
-const REASONS: Record<string, string> = {
-  sin_lectura: 'sin lectura OCR',
-  fuera_de_orden: 'fuera de orden (menor que un taco anterior o mayor que el To)',
-  fuera_de_fila: 'fuera de las filas de testigo',
-};
-
-/** Recorte de una fila de la foto con las detecciones dibujadas encima. */
-function PieceStrip({ item, piece }: { item: any; piece: SegmentPiece }) {
+/** Recorte de la foto con la máscara verde (lo que se mide como testigo). */
+function PieceStrip({ item, piece, nums }: { item: any; piece: SegmentPiece; nums: Map<number, number> }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const fila = item.result.filas[piece.row];
 
@@ -26,7 +20,7 @@ function PieceStrip({ item, piece }: { item: any; piece: SegmentPiece }) {
     const sx = piece.x0, sw = Math.max(1, piece.x1 - piece.x0);
     const sy = Math.max(0, fila.y_min - pad);
     const sh = Math.min(item.origH, fila.y_max + pad) - sy;
-    const k = Math.min(1, 1400 / sw);                 // resolución razonable
+    const k = Math.min(1, 1400 / sw);
     canvas.width = Math.round(sw * k);
     canvas.height = Math.round(sh * k);
     const ctx = canvas.getContext('2d')!;
@@ -35,15 +29,25 @@ function PieceStrip({ item, piece }: { item: any; piece: SegmentPiece }) {
     ctx.save();
     ctx.scale(k, k);
     ctx.translate(-sx, -sy);
+    ctx.beginPath();
+    ctx.rect(sx, sy, sw, sh);
+    ctx.clip();
     const lw = Math.max(2, sw / 350);
+    const geom = { scale: item.scale, padX: item.padX, padY: item.padY };
 
-    // Intervalos de núcleo
-    ctx.strokeStyle = '#00d000';
-    ctx.lineWidth = lw;
-    fila.finalIntervals.forEach(([a, b]: [number, number]) => {
-      const x0 = Math.max(a, piece.x0), x1 = Math.min(b, piece.x1);
-      if (x0 < x1) ctx.strokeRect(x0, fila.y_min, x1 - x0, fila.y_max - fila.y_min);
+    // Máscara verde del modelo de core + barra con la longitud medida
+    const cores = item.cajas.filter((d: any) => {
+      if (d.classId !== 0) return false;
+      const cy = (d.box[1] + d.box[3]) / 2;
+      return cy >= fila.y_min && cy <= fila.y_max && d.box[2] > piece.x0 && d.box[0] < piece.x1;
     });
+    cores.forEach((d: any) => paintCoreMask(ctx, item, d, '#00FF00', 110));
+    ctx.fillStyle = '#00d000';
+    const barH = Math.max(4, (fila.y_max - fila.y_min) * 0.06);
+    cores.forEach((d: any) => coreIntervals(d, geom).forEach(([a, b]) => {
+      const x0 = Math.max(a, piece.x0), x1 = Math.min(b, piece.x1);
+      if (x0 < x1) ctx.fillRect(x0, fila.y_max - barH, x1 - x0, barH);
+    }));
 
     // Fracturas y zonas que descuentan
     item.fracturas.forEach((d: any) => {
@@ -53,7 +57,7 @@ function PieceStrip({ item, piece }: { item: any; piece: SegmentPiece }) {
       if (x0 >= x1) return;
       const cls = FRACTURE_CLASSES[d.classId];
       if (DISCOUNT_CLASSES.has(cls)) {
-        ctx.fillStyle = 'rgba(217,48,37,0.28)';
+        ctx.fillStyle = 'rgba(217,48,37,0.30)';
         ctx.fillRect(x0, d.box[1], x1 - x0, d.box[3] - d.box[1]);
         ctx.strokeStyle = '#d93025';
       } else {
@@ -63,83 +67,51 @@ function PieceStrip({ item, piece }: { item: any; piece: SegmentPiece }) {
       ctx.strokeRect(x0, d.box[1], x1 - x0, d.box[3] - d.box[1]);
     });
 
-    // Tacos
-    item.cajas.forEach((d: any) => {
+    // Tacos con su número
+    const fs = Math.max(14, (fila.y_max - fila.y_min) * 0.28);
+    item.cajas.forEach((d: any, idx: number) => {
       if (d.classId !== 1) return;
       const cy = (d.box[1] + d.box[3]) / 2;
       if (cy < fila.y_min - 10 || cy > fila.y_max + 10) return;
-      if (d.box[2] < piece.x0 || d.box[0] > piece.x1) return;
+      if (d.box[2] < piece.x0 - 5 || d.box[0] > piece.x1 + 5) return;
       ctx.strokeStyle = '#00c8ff';
       ctx.lineWidth = lw * 1.5;
       ctx.strokeRect(d.box[0], d.box[1], d.box[2] - d.box[0], d.box[3] - d.box[1]);
+      const n = nums.get(idx);
+      if (n) {
+        ctx.font = `bold ${fs}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.lineWidth = fs / 6;
+        ctx.strokeStyle = '#000';
+        ctx.strokeText(`T${n}`, (d.box[0] + d.box[2]) / 2, fila.y_min + 2);
+        ctx.fillStyle = '#00e5ff';
+        ctx.fillText(`T${n}`, (d.box[0] + d.box[2]) / 2, fila.y_min + 2);
+      }
     });
     ctx.restore();
-  }, [item, piece, fila]);
+  }, [item, piece, fila, nums]);
 
-  // Escala horizontal común: el ancho del recorte es proporcional a la caja.
   const widthPct = ((piece.x1 - piece.x0) / item.origW) * 100;
   const mid = (piece.depth0 + piece.depth1) / 2;
-  const discTxt = Object.entries(piece.discounts)
-    .map(([k, v]) => `${k} −${v.toFixed(2)} m`).join(' · ');
+  const discTxt = Object.entries(piece.discounts).map(([k, v]) => `${k} −${v.toFixed(2)} m`).join(' · ');
 
   return (
     <div className="strip-piece">
-      <div className="strip-ruler" style={{ width: `${widthPct}%` }}>
+      <div className="strip-ruler" style={{ width: `${Math.max(widthPct, 22)}%` }}>
         <span>{piece.depth0.toFixed(2)}</span>
-        <span>{mid.toFixed(2)}</span>
+        {widthPct > 30 && <span>{mid.toFixed(2)}</span>}
         <span>{piece.depth1.toFixed(2)}</span>
       </div>
       <canvas ref={ref} className="strip-canvas" style={{ width: `${widthPct}%` }} />
-      <div className="strip-piece-meta">
-        Fila {piece.row + 1} · Rec {piece.recM.toFixed(2)} m · RQD {piece.rqdM.toFixed(2)} m
-        {discTxt && <span className="strip-disc"> · {discTxt}</span>}
-      </div>
+      {discTxt && <div className="strip-piece-meta strip-disc">{discTxt}</div>}
     </div>
   );
 }
 
-/** Pin con la profundidad de un taco. Al tocarlo se abre el editor fijo. */
-function TacoPin({ value, onEdit, invalid, active }: { value: string; onEdit: () => void; invalid?: boolean; active?: boolean }) {
-  return (
-    <button type="button" className={`taco-pin ${invalid ? 'invalid' : ''} ${active ? 'active' : ''}`} onClick={onEdit} title="Corregir profundidad del taco">
-      {value === '' ? '?' : value} m ✎
-    </button>
-  );
-}
-
-/**
- * Editor fijo arriba del strip log. Queda montado aunque el tramo que lo abrió
- * desaparezca al recalcular (p. ej. mientras se escribe "7" antes de "78.46").
- */
-function TacoEditor({ item, tacoIdx, onChange, onClose }: {
-  item: any; tacoIdx: number; onChange: (v: string) => void; onClose: () => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => { inputRef.current?.focus(); inputRef.current?.select(); }, [tacoIdx]);
-  const taco = item.cajas[tacoIdx];
-  if (!taco) return null;
-  const n = item.cajas.slice(0, tacoIdx + 1).filter((d: any) => d.classId === 1).length;
-  const rejected = item.result.rejectedTacos.find((r: any) => r.tacoIdx === tacoIdx);
-  return (
-    <div className="taco-editor">
-      <span>Taco {n}</span>
-      <input
-        ref={inputRef}
-        inputMode="decimal"
-        value={taco.ocrValue === null || taco.ocrValue === undefined ? '' : String(taco.ocrValue)}
-        onChange={e => onChange(e.target.value)}
-        onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') onClose(); }}
-      />
-      <span>m</span>
-      {rejected && <span className="taco-editor-warn">{REASONS[rejected.reason]}</span>}
-      <button type="button" onClick={onClose}>Listo</button>
-    </div>
-  );
-}
-
-function SegmentCard({ item, seg, index, focused, editingIdx, onEditTaco }: {
+function SegmentCard({ item, seg, index, focused, nums, onEditTaco }: {
   item: any; seg: TacoSegment; index: number; focused: boolean;
-  editingIdx: number | null; onEditTaco: (idx: number) => void;
+  nums: Map<number, number>; onEditTaco: (idx: number) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -147,8 +119,7 @@ function SegmentCard({ item, seg, index, focused, editingIdx, onEditTaco }: {
   }, [focused]);
 
   const cls = rqdClass(seg.rqdPct);
-  const startLabel = seg.startTacoIdx === undefined ? 'From' : 'taco';
-  const endLabel = seg.endTacoIdx === undefined ? 'To' : 'taco';
+  const label = (idx: number | undefined, fallback: string) => (idx === undefined ? fallback : `T${nums.get(idx) ?? '?'}`);
   const discTxt = Object.entries(seg.discounts).map(([k, v]) => `${k} −${v.toFixed(2)} m`).join(' · ');
   const endTaco = seg.endTacoIdx !== undefined ? item.cajas[seg.endTacoIdx] : null;
 
@@ -156,7 +127,7 @@ function SegmentCard({ item, seg, index, focused, editingIdx, onEditTaco }: {
     <div ref={ref} className={`strip-segment ${focused ? 'focused' : ''}`}>
       <div className="strip-seg-head">
         <span className="strip-seg-title">
-          {startLabel} → {endLabel} · {seg.from.toFixed(2)} – {seg.to.toFixed(2)} m
+          {label(seg.startTacoIdx, 'From')} → {label(seg.endTacoIdx, 'To')} · {seg.from.toFixed(2)} – {seg.to.toFixed(2)} m
         </span>
         <span className="strip-seg-kpi">
           <b style={{ color: cls.color }}>RQD {seg.rqdPct.toFixed(1)}%</b> · Rec {seg.recPct.toFixed(1)}%
@@ -166,24 +137,24 @@ function SegmentCard({ item, seg, index, focused, editingIdx, onEditTaco }: {
         <div className="strip-bar-rec" style={{ width: `${Math.min(100, seg.recPct)}%` }} />
         <div className="strip-bar-rqd" style={{ width: `${Math.min(100, (seg.rqdM / seg.lengthM) * 100)}%`, background: cls.color }} />
       </div>
-      {seg.pieces.map((p, k) => <PieceStrip key={`${index}-${k}`} item={item} piece={p} />)}
+      {seg.pieces.map((p, k) => <PieceStrip key={`${index}-${k}`} item={item} piece={p} nums={nums} />)}
       <div className="strip-seg-foot">
-        <span>{discTxt ? `Descuenta del RQD: ${discTxt}` : `Tramo ${index + 1} · ${seg.lengthM.toFixed(2)} m`}</span>
+        <span>
+          Rec {seg.recM.toFixed(2)} m · RQD {seg.rqdM.toFixed(2)} m
+          {discTxt && <span className="strip-disc"> · descuenta {discTxt}</span>}
+        </span>
         {endTaco && (
-          <TacoPin
-            value={endTaco.ocrValue === null || endTaco.ocrValue === undefined ? '' : String(endTaco.ocrValue)}
-            active={editingIdx === seg.endTacoIdx}
-            onEdit={() => onEditTaco(seg.endTacoIdx!)}
-          />
+          <button type="button" className="taco-pin" onClick={() => onEditTaco(seg.endTacoIdx!)} title="Corregir este taco">
+            T{nums.get(seg.endTacoIdx!)} · {String(endTaco.ocrValue ?? '?')} m ✎
+          </button>
         )}
       </div>
     </div>
   );
 }
 
-export default function StripLog({ item, focusSegment, onTacoChange }: Props) {
-  const [editingIdx, setEditingIdx] = useState<number | null>(null);
-  useEffect(() => { setEditingIdx(null); }, [item?.id]);
+export default function StripLog({ item, focusSegment, onEditTaco }: Props) {
+  const nums = React.useMemo(() => (item?.result ? tacoNumbers(item) : new Map<number, number>()), [item]);
   if (!item) return <div className="strip-empty">Selecciona una caja.</div>;
   if (item.status !== 'done' || !item.result?.tacoSegments) {
     return <div className="strip-empty">Analiza la caja para ver el strip log de taco a taco.</div>;
@@ -193,40 +164,15 @@ export default function StripLog({ item, focusSegment, onTacoChange }: Props) {
   return (
     <div className="striplog">
       <div className="strip-caption">
-        {item.collar || item.name} · {item.fromDepth} – {item.toDepth} m · {item.result.filas.length} filas · {tacoSegments.length} tramos
+        {item.collar || item.name} · {item.fromDepth} – {item.toDepth} m · {tacoSegments.length} tramos
       </div>
-
-      {editingIdx !== null && (
-        <TacoEditor
-          item={item}
-          tacoIdx={editingIdx}
-          onChange={v => onTacoChange(editingIdx, v)}
-          onClose={() => setEditingIdx(null)}
-        />
-      )}
-
       {rejectedTacos.length > 0 && (
-        <div className="strip-rejected">
-          <div className="strip-rejected-title">Tacos no usados en el cálculo — corrígelos aquí:</div>
-          {rejectedTacos.map(r => (
-            <div key={r.tacoIdx} className="strip-rejected-row">
-              <TacoPin value={r.value} invalid active={editingIdx === r.tacoIdx} onEdit={() => setEditingIdx(r.tacoIdx)} />
-              <span>{REASONS[r.reason]}</span>
-            </div>
-          ))}
-        </div>
+        <button type="button" className="strip-rejected" onClick={() => onEditTaco(rejectedTacos[0].tacoIdx)}>
+          {rejectedTacos.length} taco(s) sin usar en el cálculo — revisar en la lista de tacos
+        </button>
       )}
-
       {tacoSegments.map((seg: TacoSegment, i: number) => (
-        <SegmentCard
-          key={i}
-          item={item}
-          seg={seg}
-          index={i}
-          focused={focusSegment === i}
-          editingIdx={editingIdx}
-          onEditTaco={setEditingIdx}
-        />
+        <SegmentCard key={i} item={item} seg={seg} index={i} focused={focusSegment === i} nums={nums} onEditTaco={onEditTaco} />
       ))}
     </div>
   );

@@ -84,49 +84,70 @@
 .taco-pin.invalid { border-color: var(--danger); background: #fdecea; color: var(--danger); }
 .taco-pin.active { box-shadow: 0 0 0 2px rgba(0, 163, 204, .35); }
 
-.taco-editor {
-  position: sticky; top: -10px; z-index: 5; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-  background: #fff; border: 1px solid var(--primary); border-radius: 8px; padding: 8px 10px;
-  box-shadow: var(--shadow-md); font-size: 12px; font-weight: 600;
-}
-.taco-editor input {
-  width: 90px; padding: 3px 6px; border: 1px solid var(--border); border-radius: 4px;
-  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px;
-}
-.taco-editor button {
-  margin-left: auto; border: none; background: var(--primary); color: #fff; border-radius: 4px;
-  padding: 4px 10px; font-size: 12px; cursor: pointer;
-}
-.taco-editor-warn { color: var(--danger); font-weight: 500; font-size: 11px; }
-
 .strip-rejected {
-  border: 1px solid #f3c1bc; background: #fdf4f3; border-radius: 8px; padding: 8px 10px; font-size: 11px;
+  border: 1px solid #f3c1bc; background: #fdf4f3; border-radius: 8px; padding: 8px 10px; font-size: 12px;
+  color: var(--danger); font-weight: 600; text-align: left; cursor: pointer;
 }
-.strip-rejected-title { font-weight: 600; color: var(--danger); margin-bottom: 6px; }
-.strip-rejected-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; color: var(--text-muted); }
+.strip-rejected:hover { background: #fbe7e5; }
+.tab-badge {
+  display: inline-block; margin-left: 6px; min-width: 18px; padding: 0 5px; border-radius: 9px;
+  background: var(--danger); color: #fff; font-size: 10px; line-height: 16px;
+}
 
-/* ---------- Tabla taco a taco ---------- */
-.taco-table-wrap { display: flex; flex-direction: column; gap: 12px; }
-.taco-table-toolbar { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-muted); }
-.taco-table-toolbar .btn { padding: 3px 10px; font-size: 12px; }
-.taco-table-hole { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-.taco-table-hole-head {
-  display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; justify-content: space-between;
-  padding: 8px 10px; background: #fff; font-size: 12px; border-bottom: 1px solid var(--border);
+/* ---------- Lista de tacos (panel derecho) ---------- */
+.taco-list { display: flex; flex-direction: column; gap: 6px; }
+.taco-list-hint { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+.taco-list-bad { color: var(--danger); font-weight: 600; }
+.taco-row {
+  display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--border);
+  border-radius: 8px; background: #fff;
 }
-.taco-table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: ui-monospace, Menlo, Consolas, monospace; }
-.taco-table th {
-  position: sticky; top: -10px; background: #f1f3f5; text-align: right; font-weight: 600;
-  padding: 5px 6px; color: var(--text-muted); font-size: 11px;
+.taco-row.bad { border-color: #f3c1bc; background: #fdf7f6; }
+.taco-row.focused { box-shadow: 0 0 0 2px rgba(0, 79, 113, .25); border-color: var(--primary); }
+.taco-num {
+  flex-shrink: 0; min-width: 34px; text-align: center; padding: 2px 0; border-radius: 6px;
+  background: #0b2a3a; color: #00e5ff; font: 700 13px ui-monospace, Menlo, Consolas, monospace;
 }
-.taco-table td { text-align: right; padding: 4px 6px; border-top: 1px solid #eef0f2; }
-.taco-table tbody tr { cursor: pointer; }
-.taco-table tbody tr:hover { background: #f5f9fb; }
-.taco-table tbody tr.active { background: #e8f2f6; }
-.taco-table-barcell { width: 70px; }
-.taco-table-bar { height: 6px; background: #e6e8eb; border-radius: 3px; overflow: hidden; }
-.taco-table-bar > div { height: 100%; }
-.taco-table-multi { color: var(--accent); margin-left: 3px; font-size: 10px; }
+.taco-thumb { height: 44px; width: auto; max-width: 110px; border-radius: 4px; background: #222; flex-shrink: 0; }
+.taco-row input {
+  width: 78px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px;
+  font: 600 14px ui-monospace, Menlo, Consolas, monospace;
+}
+.taco-row input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 79, 113, .15); }
+.taco-unit { font-size: 12px; color: var(--text-muted); }
+.taco-status { font-size: 10px; padding: 1px 6px; border-radius: 9px; white-space: nowrap; }
+.taco-status.ok { background: #e6f4ea; color: #1e7b34; }
+.taco-status.bad { background: #fce8e6; color: var(--danger); }
+.taco-locate {
+  margin-left: auto; border: 1px solid var(--border); background: #fff; border-radius: 4px;
+  cursor: pointer; font-size: 14px; line-height: 1; padding: 4px 6px; color: var(--text-muted);
+}
+
+/* ---------- Resultados abajo (formato del reporte) ---------- */
+.widget-rqd.embedded .rqd-preview-container { height: auto; flex: 1 1 auto; min-height: 0; }
+.results-dock {
+  flex-shrink: 0; display: flex; flex-direction: column; background: #fff;
+  border-top: 2px solid var(--primary); height: 240px; z-index: 20;
+}
+.results-dock.collapsed { height: auto; }
+.results-head {
+  display: flex; align-items: center; gap: 12px; padding: 6px 10px; border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.results-toggle { border: none; background: none; font-weight: 700; color: var(--primary); cursor: pointer; font-size: 12px; }
+.results-totals { color: var(--text-muted); }
+.results-csv { margin-left: auto; padding: 2px 10px; font-size: 12px; }
+.results-body { flex: 1; overflow: auto; min-height: 0; }
+.results-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.results-table th {
+  position: sticky; top: 0; background: #f1f3f5; text-align: left; font-weight: 600; padding: 5px 8px;
+  border-bottom: 1px solid var(--border); border-right: 1px solid #e3e5e8; white-space: nowrap;
+}
+.results-table td { padding: 3px 8px; border-bottom: 1px solid #eef0f2; border-right: 1px solid #f0f1f3; white-space: nowrap; }
+.results-table td:nth-child(n+2):nth-child(-n+7) { text-align: right; font-family: ui-monospace, Menlo, Consolas, monospace; }
+.results-table tbody tr { cursor: pointer; }
+.results-table tbody tr:hover { background: #f5f9fb; }
+.results-table tbody tr.active { background: #e8f2f6; }
 
 @media (max-width: 1100px) {
   .rqd-strip-panel { width: 360px; }

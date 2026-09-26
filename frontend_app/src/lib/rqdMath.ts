@@ -76,6 +76,7 @@ export interface RqdResult {
   fracturas_report: string[][];
   tacoSegments: TacoSegment[];
   rejectedTacos: RejectedTaco[];
+  tacoOrder: number[];            // índices de `cajas` ordenados a lo largo del testigo → T1, T2, ...
 }
 
 export interface ComputeInput {
@@ -86,7 +87,13 @@ export interface ComputeInput {
   origW: number;
   cajas: Detection[];
   fracturas: Detection[];
+  // Geometría del letterbox de segmentación (para ubicar la máscara verde)
+  scale?: number;
+  padX?: number;
+  padY?: number;
 }
+
+export interface MaskGeom { scale: number; padX: number; padY: number; }
 
 export interface ComputeOutput {
   result: RqdResult;
@@ -126,7 +133,57 @@ export function subtractInterval(list: [number, number][], a: number, b: number)
   return out;
 }
 
-export function groupRows(cajas: Detection[]): Fila[] {
+const MASK_ON = 0.5;           // probabilidad mínima para contar un píxel como testigo
+const COL_COVERAGE = 0.35;     // fracción mínima de la columna (dentro de la caja) cubierta por la máscara
+
+/** Lado del letterbox al que corresponde la máscara (igual que el dibujo). */
+export function maskTarget(len: number) {
+  return len === 65536 ? 1024 : len === 262144 ? 512 : 640;
+}
+
+/**
+ * Intervalos X (px de la foto) donde realmente hay testigo según la máscara
+ * verde del modelo de core. Sin máscara → la caja completa (comportamiento anterior).
+ */
+export function coreIntervals(d: Detection, geom?: MaskGeom): [number, number][] {
+  const box: [number, number] = [d.box[0], d.box[2]];
+  if (!d.mask || !geom || !geom.scale) return [box];
+  const side = Math.round(Math.sqrt(d.mask.length));
+  if (side * side !== d.mask.length) return [box];
+  const k = maskTarget(d.mask.length) / side;                   // px letterbox por píxel de máscara
+  const toX = (mx: number) => (mx * k - geom.padX) / geom.scale; // máscara → foto
+  const toM = (x: number) => (x * geom.scale + geom.padX) / k;   // foto → máscara
+  const mx0 = Math.max(0, Math.floor(toM(d.box[0])));
+  const mx1 = Math.min(side - 1, Math.ceil(toM(d.box[2])) - 1);
+  const my0 = Math.max(0, Math.floor((d.box[1] * geom.scale + geom.padY) / k));
+  const my1 = Math.min(side - 1, Math.ceil((d.box[3] * geom.scale + geom.padY) / k) - 1);
+  const rows = my1 - my0 + 1;
+  if (mx1 < mx0 || rows <= 0) return [box];
+
+  const out: [number, number][] = [];
+  let start = -1, gap = 0;
+  for (let mx = mx0; mx <= mx1 + 1; mx++) {
+    let on = false;
+    if (mx <= mx1) {
+      let c = 0;
+      for (let my = my0; my <= my1; my++) if (d.mask[my * side + mx] > MASK_ON) c++;
+      on = c >= rows * COL_COVERAGE;
+    }
+    if (on) { if (start < 0) start = mx; gap = 0; }
+    else if (start >= 0) {
+      gap++;
+      if (gap > 1 || mx > mx1) {           // tolera huecos de 1 píxel de máscara
+        const end = mx - gap + 1;
+        out.push([Math.max(d.box[0], toX(start)), Math.min(d.box[2], toX(end))]);
+        start = -1; gap = 0;
+      }
+    }
+  }
+  const clean = out.filter(iv => iv[1] - iv[0] > 0);
+  return clean.length > 0 ? clean : [];
+}
+
+export function groupRows(cajas: Detection[], geom?: MaskGeom): Fila[] {
   const cores = cajas
     .filter(d => d.classId === 0)
     .map(d => ({
@@ -142,8 +199,9 @@ export function groupRows(cajas: Detection[]): Fila[] {
 
   const close = (group: typeof cores) => {
     group.sort((a, b) => a.centerX - b.centerX);
-    const raw = group.map(d => [d.box[0], d.box[2]] as [number, number]).sort((a, b) => a[0] - b[0]);
+    const raw = group.flatMap(d => coreIntervals(d, geom)).sort((a, b) => a[0] - b[0]);
     const merged: [number, number][] = [];
+    if (raw.length === 0) raw.push([group[0].box[0], group[0].box[0]]);
     let cur = [...raw[0]] as [number, number];
     for (let i = 1; i < raw.length; i++) {
       if (raw[i][0] <= cur[1]) cur[1] = Math.max(cur[1], raw[i][1]);
@@ -223,7 +281,8 @@ export function computeRqd(input: ComputeInput, initial = false): ComputeOutput 
   const nominal = to - from;
   const warnings: string[] = [];
 
-  const filas = groupRows(cajas);
+  const geom = input.scale ? { scale: input.scale, padX: input.padX || 0, padY: input.padY || 0 } : undefined;
+  const filas = groupRows(cajas, geom);
 
   // ---- Anclas de profundidad ----
   const anchors: Anchor[] = [{ p: 0, depth: from }];
@@ -383,6 +442,22 @@ export function computeRqd(input: ComputeInput, initial = false): ComputeOutput 
       });
   }
 
+  if (initial && outCajas !== cajas) {
+    // Recalcula con los tacos rellenados para que el resultado quede coherente
+    return computeRqd({ ...input, cajas: outCajas }, false);
+  }
+
+  // ---- Numeración de tacos a lo largo del testigo (fila, x) ----
+  const tacoOrder = cajas
+    .map((d, idx) => ({ d, idx }))
+    .filter(t => t.d.classId === 1)
+    .map(t => {
+      const row = rowOfY(filas, (t.d.box[1] + t.d.box[3]) / 2);
+      return { idx: t.idx, key: (row === -1 ? filas.length + (t.d.box[1] / 1e6) : row) * origW + t.d.box[0] };
+    })
+    .sort((a, b) => a.key - b.key)
+    .map(t => t.idx);
+
   const csvRow = [
     input.collar, input.fromDepth, input.toDepth,
     rqdPct.toFixed(1), rqdTotal.toFixed(2), recPct.toFixed(1), recTotal.toFixed(2), input.name,
@@ -409,6 +484,7 @@ export function computeRqd(input: ComputeInput, initial = false): ComputeOutput 
       fracturas_report: fracturasReport,
       tacoSegments,
       rejectedTacos,
+      tacoOrder,
     },
   };
 }

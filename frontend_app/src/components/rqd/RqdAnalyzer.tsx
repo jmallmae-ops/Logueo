@@ -10,7 +10,8 @@ import * as XLSX from 'xlsx';
 import ImagoLoginModal from '../common/ImagoLoginModal';
 import CameraCropModal from '../common/CameraCropModal';
 import StripLog from './StripLog';
-import TacoRqdTable from './TacoRqdTable';
+import TacoList from './TacoList';
+import ResultsTable, { RESULT_HEADERS, resultRow } from './ResultsTable';
 import { ImageItem } from '../../types';
 import { computeRqd, mergeHoleSegments, sortImagesForHole, parseDepth } from '../../lib/rqdMath';
 import { drawAnnotatedBox } from '../../lib/rqdDraw';
@@ -59,8 +60,10 @@ interface State {
   lastCameraSondaje: string;
   lastCameraToDepth: string;
   stripOpen: boolean;
-  stripTab: 'strip' | 'table';
+  stripTab: 'tacos' | 'strip';
   focusSegment: number | null;
+  focusTaco: number | null;
+  resultsCollapsed: boolean;
 }
 
 // Rutas de los modelos (servidos desde public/assets; en Docker los baja fetch_lfs.py)
@@ -160,13 +163,16 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
     lastCameraSondaje: '',
     lastCameraToDepth: '',
     stripOpen: true,
-    stripTab: 'strip',
+    stripTab: 'tacos',
     focusSegment: null,
+    focusTaco: null,
+    resultsCollapsed: false,
   };
 
   componentDidUpdate(_: Props, prev: State) {
     if (prev.currentIndex !== this.state.currentIndex && this.state.currentIndex >= 0) {
       this.drawCanvasForCurrentItem();
+      if (this.state.focusTaco !== null) this.setState({ focusTaco: null });
     }
   }
 
@@ -645,10 +651,7 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
     const global = [head, ...done.map(i => i.csvData[i.csvData.length - 1])];
     const fr = [['Sondaje', 'Caja (Imagen)', 'Clase', 'Confianza', 'Desde (m)', 'Hasta (m)']];
     done.forEach(i => i.result?.fracturas_report?.forEach((r: string[]) => fr.push(r)));
-    const tacos = [head, ...mergeHoleSegments(done).map(r => [
-      r.collar, r.from.toFixed(2), r.to.toFixed(2), r.rqdPct.toFixed(1), r.rqdM.toFixed(2),
-      r.recPct.toFixed(1), r.recM.toFixed(2), Array.from(new Set(r.parts.map(p => p.imageName))).join(' | '),
-    ])];
+    const tacos = [RESULT_HEADERS, ...mergeHoleSegments(done).map(resultRow)];
     const cols = [15, 12, 12, 12, 12, 15, 15, 25].map(wch => ({ wch }));
     const wb = XLSX.utils.book_new();
     const s1 = XLSX.utils.aoa_to_sheet(global); s1['!cols'] = cols;
@@ -691,7 +694,6 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
 
   renderSidebar(cur: ImageItem | null) {
     const { images, currentIndex } = this.state;
-    const tacoRows = cur?.cajas?.map((t, idx) => ({ t, idx })).filter(x => x.t.classId === 1) || [];
     return (
       <div className="rqd-sidebar">
         <div className="rqd-card">
@@ -795,23 +797,6 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
                 )}
               </div>
             )}
-          </div>
-        )}
-
-        {tacoRows.length > 0 && (
-          <div className="rqd-card mt-3">
-            <h5>Corregir Tacos Detectados</h5>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 6 }}>Los cambios se recalculan al instante.</div>
-            {tacoRows.map(({ t, idx }, n) => (
-              <div key={idx} className="d-flex align-items-center mb-1">
-                <label className="mb-0" style={{ fontSize: '0.75rem', width: 70, color: 'var(--text-muted)' }}>Taco {n + 1}:</label>
-                <input type="text" inputMode="decimal" className="form-control"
-                  value={t.ocrValue !== undefined && t.ocrValue !== null ? String(t.ocrValue) : ''}
-                  onChange={e => this.handleTacoEdit(currentIndex, idx, e.target.value)}
-                  style={{ padding: '2px 6px', fontSize: '0.8rem', flex: 1 }} />
-                <span className="ml-2" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>m</span>
-              </div>
-            ))}
           </div>
         )}
 
@@ -936,42 +921,50 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
     );
   }
 
+  editTaco = (cajaIdx: number) => {
+    // null primero para que el mismo taco vuelva a enfocarse si se pide de nuevo
+    this.setState({ stripTab: 'tacos', focusTaco: null }, () => this.setState({ focusTaco: cajaIdx }));
+  };
+
+  locateTaco = (cajaIdx: number) => {
+    const segs = this.state.images[this.state.currentIndex]?.result?.tacoSegments || [];
+    let seg = segs.findIndex((t: any) => t.endTacoIdx === cajaIdx);
+    if (seg === -1) seg = segs.findIndex((t: any) => t.startTacoIdx === cajaIdx);
+    this.setState({ stripTab: 'strip', focusSegment: null }, () => this.setState({ focusSegment: seg === -1 ? null : seg }));
+  };
+
   renderStripPanel(cur: ImageItem | null) {
-    const { stripOpen, stripTab, images, focusSegment } = this.state;
+    const { stripOpen, stripTab, focusSegment, focusTaco } = this.state;
     if (!stripOpen) {
       return (
-        <button type="button" className="rqd-strip-reopen" onClick={() => this.setState({ stripOpen: true })} title="Mostrar strip log">
-          ◀ Strip log
+        <button type="button" className="rqd-strip-reopen" onClick={() => this.setState({ stripOpen: true })} title="Mostrar panel">
+          ◀ Tacos / Strip log
         </button>
       );
     }
+    const nTacos = cur?.result?.tacoOrder?.length ?? 0;
+    const nBad = cur?.result?.rejectedTacos?.length ?? 0;
     return (
       <aside className="rqd-strip-panel">
         <div className="rqd-strip-header">
           <div className="rqd-strip-tabs">
+            <button type="button" className={stripTab === 'tacos' ? 'active' : ''} onClick={() => this.setState({ stripTab: 'tacos' })}>
+              Tacos ({nTacos}){nBad > 0 && <span className="tab-badge">{nBad}</span>}
+            </button>
             <button type="button" className={stripTab === 'strip' ? 'active' : ''} onClick={() => this.setState({ stripTab: 'strip' })}>Strip log</button>
-            <button type="button" className={stripTab === 'table' ? 'active' : ''} onClick={() => this.setState({ stripTab: 'table' })}>RQD taco a taco</button>
           </div>
           <button type="button" className="rqd-strip-close" onClick={() => this.setState({ stripOpen: false })} title="Ocultar">▶</button>
         </div>
         <div className="rqd-strip-body">
-          {stripTab === 'strip' ? (
-            <StripLog
+          {stripTab === 'tacos' ? (
+            <TacoList
               item={cur}
-              focusSegment={focusSegment}
-              onTacoChange={(cajaIdx, v) => this.handleTacoEdit(this.state.currentIndex, cajaIdx, v)}
+              focusTaco={focusTaco}
+              onChange={(cajaIdx, v) => this.handleTacoEdit(this.state.currentIndex, cajaIdx, v)}
+              onLocate={this.locateTaco}
             />
           ) : (
-            <TacoRqdTable
-              images={images}
-              currentImageId={cur?.id ?? null}
-              onSelect={(imageId, segIndex) => {
-                const idx = images.findIndex(i => i.id === imageId);
-                if (idx === -1) return;
-                this.setState({ stripTab: 'strip', focusSegment: segIndex });
-                this.scrollToImage(idx);
-              }}
-            />
+            <StripLog item={cur} focusSegment={focusSegment} onEditTaco={this.editTaco} />
           )}
         </div>
       </aside>
@@ -997,6 +990,20 @@ export default class RqdAnalyzer extends React.PureComponent<Props, State> {
                 </div>
               )}
               {this.renderLightTable()}
+              {view === 'light_table' && (
+                <ResultsTable
+                  images={images}
+                  currentImageId={cur.id}
+                  collapsed={this.state.resultsCollapsed}
+                  onToggle={() => this.setState(s => ({ resultsCollapsed: !s.resultsCollapsed }))}
+                  onSelect={(imageId, segIndex) => {
+                    const idx = images.findIndex(i => i.id === imageId);
+                    if (idx === -1) return;
+                    this.setState({ stripTab: 'strip', focusSegment: null }, () => this.setState({ focusSegment: segIndex }));
+                    this.scrollToImage(idx);
+                  }}
+                />
+              )}
               {view === 'gallery' && this.renderGallery()}
               {view === 'map' && (
                 <div style={{ width: '100%', height: '100%', backgroundColor: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
